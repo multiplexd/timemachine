@@ -145,7 +145,7 @@ public class Configurator {
             }
         }
 
-        if (options.optind() <= args.length) {
+        if (options.optind() < args.length) {
             System.err.println("unexpected trailing arguments");
             System.exit(1);
         }
