@@ -23,9 +23,10 @@ import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.NickChangeEvent;
 import org.pircbotx.hooks.events.PartEvent;
 import org.pircbotx.hooks.events.PrivateMessageEvent;
-import org.pircbotx.output.OutputIRC;
+import org.pircbotx.hooks.events.QuitEvent;
 import org.pircbotx.hooks.types.GenericChannelUserEvent;
 import org.pircbotx.hooks.types.GenericMessageEvent;
+import org.pircbotx.output.OutputIRC;
 
 /**
  * Main bot event handler.
@@ -303,6 +304,18 @@ public class TimeMachine extends ListenerAdapter {
     }
 
     @Override
+    public void onQuit(QuitEvent event) {
+        if (event.getUser().getNick().equalsIgnoreCase(event.getBot().getNick()))
+            // ignore our own quit messages
+            return;
+
+        // delete user from channel message logs
+        this.log.deleteNick(event.getUser().getNick());
+
+        return;
+    }
+
+    @Override
     public void onNickChange(NickChangeEvent event) {
         if (event.getOldNick().equalsIgnoreCase(event.getBot().getNick()) ||
             event.getNewNick().equalsIgnoreCase(event.getBot().getNick()))
@@ -330,6 +343,10 @@ public class TimeMachine extends ListenerAdapter {
             this.history.remove(channel);
         }
 
+        ChannelHist getChannel(String channel) {
+            return this.history.get(channel);
+        }
+
 	// add users to channel from populated Channel object
         void populateChannel(Channel channel) {
             ChannelHist hist;
@@ -354,8 +371,11 @@ public class TimeMachine extends ListenerAdapter {
             }
         }
 
-        ChannelHist getChannel(String channel) {
-            return this.history.get(channel);
+        // remove quitting users
+        void deleteNick(String nick) {
+            for (ChannelHist channel: this.history.values()) {
+                channel.delUser(nick);
+            }
         }
     }
 
