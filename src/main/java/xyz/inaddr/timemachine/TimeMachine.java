@@ -39,6 +39,7 @@ public class TimeMachine extends ListenerAdapter {
     private final Pattern PRINT_MATCH = Pattern.compile("^[pP]/((?:\\\\/|[^/])*)(?!\\\\)/([^ ~]*)((?:~[0-9]+)?)");
 
     private final Pattern ADDRESSED_MATCH = Pattern.compile("^[^,: /]+[,:]\\s+.*$");
+    private final String SOURCE_URL = "https://tildegit.org/multiplexd/timemachine"; // self documentation
 
     // emulate the sound of the tardis when quitting
     private final String PART_MESSAGE = "*hooreeerwww... hooreeerwww... veeoom-eeom...*";
@@ -164,6 +165,8 @@ public class TimeMachine extends ListenerAdapter {
         message = event.getMessage();
         parsed = message;
 
+	result = null;
+
         // handle messages of the format "bob: s/foo/bar" by splitting into nick
         // and line, and then setting the default target of any possible recall
         // or search/replace to the addressed user.
@@ -173,16 +176,25 @@ public class TimeMachine extends ListenerAdapter {
             if (split.length > 1) {
                 user = split[0];
                 parsed = split[1];
+
+		// check for magic commands to return source URL
+		if (parsed.equals("source") || parsed.equals("docs")) {
+		    result = this.SOURCE_URL;
+		}
             }
         }
 
-        result = null;
+	if (result == null) {
+	    result = this.searchReplace(chist, user, parsed);
+	}
 
-        if ((result = this.searchReplace(chist, user, parsed)) != null) {
-            event.getChannel().send().message(result);
-        } else if ((result = this.recall(chist, user, parsed)) != null) {
-            event.getChannel().send().message(result);
-        }
+	if (result == null) {
+	    result = this.recall(chist, user, parsed);
+	}
+
+	if (result != null) {
+	    event.getChannel().send().message(result);
+	}
 
         uhist.pushMsg(message, isctcp);
     }
