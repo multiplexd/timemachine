@@ -2,6 +2,7 @@
 
 package xyz.inaddr.timemachine;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -168,12 +169,12 @@ public class TimeMachine extends ListenerAdapter {
         uhist.pushMsg(message, isctcp);
     }
 
-    // recall a previous line
-    private String recall(ChannelHist channel, String srcuser, String message) {
+    // recall a user's previous line
+    private String recall(ChannelHist channel, String user, String message) {
         Matcher match;
         String search, target;
         int offset;
-        UserHist user;
+        UserHist uhist;
         String ret;
 
         match = this.PRINT_MATCH.matcher(message);
@@ -182,8 +183,16 @@ public class TimeMachine extends ListenerAdapter {
         search = match.group(1);
         target = match.group(2);
 
-        if (target.equals(""))
-            target = srcuser;
+        if (target.equals("")) {
+            target = user;
+        } else {
+            target = channel.expandUniquePrefix(target);
+        }
+
+        if (target == null) return null;
+
+        uhist = channel.getUser(target);
+        if (uhist == null) return null;
 
         if (match.group(3).equals("")) {
             offset = 0;
@@ -196,21 +205,18 @@ public class TimeMachine extends ListenerAdapter {
             }
         }
 
-        user = channel.getUser(target);
-        if (user == null) return null;
-
-        ret = user.recall(search, offset);
+        ret = uhist.recall(search, offset);
         if (ret == null) return null;
 
         return String.format(ret, target);
     }
 
     // perform a regex search and replace on a user's line
-    private String searchReplace(ChannelHist channel, String srcuser, String message) {
+    private String searchReplace(ChannelHist channel, String user, String message) {
         Matcher match;
         String search, replace, target;
         int offset;
-        UserHist user;
+        UserHist uhist;
         String ret;
 
         match = this.SED_MATCH.matcher(message);
@@ -220,8 +226,16 @@ public class TimeMachine extends ListenerAdapter {
         replace = match.group(2);
         target = match.group(3);
 
-        if (target.equals(""))
-            target = srcuser;
+        if (target.equals("")) {
+            target = user;
+        } else {
+            target = channel.expandUniquePrefix(target);
+        }
+
+        if (target == null) return null;
+
+        uhist = channel.getUser(target);
+        if (uhist == null) return null;
 
         if (match.group(4).equals("")) {
             offset = 0;
@@ -234,15 +248,12 @@ public class TimeMachine extends ListenerAdapter {
             }
         }
 
-        user = channel.getUser(target);
-        if (user == null) return null;
-
-        ret = user.searchReplace(search, replace, offset);
+        ret = uhist.searchReplace(search, replace, offset);
         if (ret == null) return null;
 
         return String.format(ret, target);
     }
-    
+
     @Override
     public void onJoin(JoinEvent event) {
         ChannelHist hist;
@@ -409,16 +420,40 @@ public class TimeMachine extends ListenerAdapter {
             this.history.remove(nick);
         }
 
+        UserHist getUser(String nick) {
+            return this.history.get(nick);
+        }
+
+        // search for username from unique prefix
+        String expandUniquePrefix(String prefix) {
+            String ret, nick;
+            int matches;
+            Iterator<String> users;
+
+            matches = 0; ret = null;
+            users = this.history.keySet().iterator();
+            while (users.hasNext()) {
+                nick = users.next();
+                if (nick.startsWith(prefix)) {
+                    ret = nick;
+                    matches++;
+                }
+            }
+
+            if (matches == 1) {
+                return new String(ret);
+            } else {
+                return null;
+            }
+        }
+
 	// change user nick if user is present
         void userNick(String oldnick, String newnick) {
             UserHist hist = this.history.remove(oldnick);
-            if (hist == null)
-                return;
-            this.history.put(newnick, hist);
-        }
+            if (hist != null)
+                this.history.put(newnick, hist);
 
-        UserHist getUser(String nick) {
-            return this.history.get(nick);
+            return;
         }
     }
 
