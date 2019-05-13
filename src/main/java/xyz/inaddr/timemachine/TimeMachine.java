@@ -37,6 +37,9 @@ public class TimeMachine extends ListenerAdapter {
     // (https://puckipedia.com) for these regexes.
     private final Pattern SED_MATCH = Pattern.compile("^[sS]/((?:\\\\/|[^/])*)(?!\\\\)/((?:\\\\/|[^/])*)/([^ ~]*)((?:~[0-9]+)?)");
     private final Pattern PRINT_MATCH = Pattern.compile("^[pP]/((?:\\\\/|[^/])*)(?!\\\\)/([^ ~]*)((?:~[0-9]+)?)");
+
+    private final Pattern ADDRESSED_MATCH = Pattern.compile("^[^,: /]+[,:]\\s+.*$");
+
     // emulate the sound of the tardis when quitting
     private final String PART_MESSAGE = "*hooreeerwww... hooreeerwww... veeoom-eeom...*";
 
@@ -139,7 +142,8 @@ public class TimeMachine extends ListenerAdapter {
 
     // handle public messages to channels 
     private <T extends GenericMessageEvent & GenericChannelUserEvent> void messageDriver(T event, boolean isctcp) {
-        String channel, user, message, trigresult;
+        String channel, user, message, parsed, result;
+        String[] split;
         ChannelHist chist;
         UserHist uhist;
 
@@ -158,12 +162,26 @@ public class TimeMachine extends ListenerAdapter {
         if (uhist == null) return;
 
         message = event.getMessage();
-        trigresult = null;
+        parsed = message;
 
-        if ((trigresult = this.searchReplace(chist, user, message)) != null) {
-            event.getChannel().send().message(trigresult);
-        } else if ((trigresult = this.recall(chist, user, message)) != null) {
-            event.getChannel().send().message(trigresult);
+        // handle messages of the format "bob: s/foo/bar" by splitting into nick
+        // and line, and then setting the default target of any possible recall
+        // or search/replace to the addressed user.
+        if (!isctcp && this.ADDRESSED_MATCH.matcher(message).matches()) {
+            split = message.split("[:,]\\s+", 1);
+
+            if (split.length > 1) {
+                user = split[0];
+                parsed = split[1];
+            }
+        }
+
+        result = null;
+
+        if ((result = this.searchReplace(chist, user, parsed)) != null) {
+            event.getChannel().send().message(result);
+        } else if ((result = this.recall(chist, user, parsed)) != null) {
+            event.getChannel().send().message(result);
         }
 
         uhist.pushMsg(message, isctcp);
