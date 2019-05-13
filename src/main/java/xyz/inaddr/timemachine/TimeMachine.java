@@ -452,7 +452,12 @@ public class TimeMachine extends ListenerAdapter {
             users = this.history.keySet().iterator();
             while (users.hasNext()) {
                 nick = users.next();
-                if (nick.startsWith(prefix)) {
+		if (nick.equals(prefix)) {
+		    // catch the special case where one user has a nick which is
+		    // a substring of another's
+		    ret = nick;
+		    matches = 1;
+		} else if (nick.startsWith(prefix)) {
                     ret = nick;
                     matches++;
                 }
