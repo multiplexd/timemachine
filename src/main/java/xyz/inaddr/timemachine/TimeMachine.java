@@ -168,7 +168,7 @@ public class TimeMachine extends ListenerAdapter {
         // and line, and then setting the default target of any possible recall
         // or search/replace to the addressed user.
         if (!isctcp && this.ADDRESSED_MATCH.matcher(message).matches()) {
-            split = message.split("[:,]\\s+", 1);
+            split = message.split("[:,]\\s+", 2);
 
             if (split.length > 1) {
                 user = split[0];
