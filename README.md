@@ -39,7 +39,10 @@ s/regex/replacement/[target][~offset]
 ```
 
 `target` and `offset` may be omitted, in which case they are set to the user who
-sent the message and zero, respectively.
+sent the message and zero, respectively. If `target` is specified explicitly,
+then `timemachine` will attempt to find a unique user in the channel whose nick
+starts with `target` (i.e. it performs a prefix-based search for the intended
+target).
 
 `timemachine` will search backwards through the channel's recorded message
 history for messages from `target` matching `regex`. `offset` number of matches
