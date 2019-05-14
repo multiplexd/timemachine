@@ -35,7 +35,7 @@ import org.pircbotx.output.OutputIRC;
 public class TimeMachine extends ListenerAdapter {
     // substitution and recall commands -- credit to puck
     // (https://puckipedia.com) for these regexes.
-    private final Pattern SED_MATCH = Pattern.compile("^[sS]/((?:\\\\/|[^/])*)(?!\\\\)/((?:\\\\/|[^/])*)/([^ ~]*)((?:~[0-9]+)?)");
+    private final Pattern SED_MATCH = Pattern.compile("^[sS]/((?:\\\\/|[^/])*)(?!\\\\)/((?:\\\\/|[^/])*)(?:/([^ ~]*)((?:~[0-9]+)?))?");
     private final Pattern PRINT_MATCH = Pattern.compile("^[pP]/((?:\\\\/|[^/])*)(?!\\\\)/([^ ~]*)((?:~[0-9]+)?)");
 
     private final Pattern ADDRESSED_MATCH = Pattern.compile("^[^,: /]+[,:]\\s+.*$");
@@ -128,7 +128,9 @@ public class TimeMachine extends ListenerAdapter {
     @Override
     public void onConnect(ConnectEvent event) {
 	// set user modes when connected
-        event.getBot().sendIRC().mode(event.getBot().getNick(), this.initmodes);
+	if (this.initmodes != null) {
+            event.getBot().sendIRC().mode(event.getBot().getNick(), this.initmodes);
+	}
     }
 
     @Override
@@ -245,19 +247,31 @@ public class TimeMachine extends ListenerAdapter {
     // perform a regex search and replace on a user's line
     private String searchReplace(ChannelHist channel, String user, String message) {
         Matcher match;
-        String search, replace, target;
+        String search, replace, target, offstring;
         int offset;
         UserHist uhist;
         String ret;
+        int groups;
 
         match = this.SED_MATCH.matcher(message);
         if (!match.matches()) return null;
 
+        groups = match.groupCount();
         search = match.group(1);
         replace = match.group(2);
-        target = match.group(3);
 
-        if (target.equals("")) {
+        if (groups == 2 && replace.equals("")) {
+            // catch s/foo/ form
+            return null;
+        }
+
+        if (groups > 2) {
+            target = match.group(3);
+        } else {
+            target = null;
+        }
+
+        if (target == null || target.equals("")) {
             target = user;
         } else {
             target = channel.expandUniquePrefix(target);
@@ -268,7 +282,13 @@ public class TimeMachine extends ListenerAdapter {
         uhist = channel.getUser(target);
         if (uhist == null) return null;
 
-        if (match.group(4).equals("")) {
+        if (groups > 2) {
+            offstring = match.group(4);
+        } else {
+            offstring = null;
+        }
+
+        if (offstring == null || offstring.equals("")) {
             offset = 0;
         } else {
             try {
