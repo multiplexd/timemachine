@@ -178,7 +178,8 @@ public class TimeMachine extends ListenerAdapter {
                 parsed = split[1];
 
 		// check for magic commands to return source URL
-		if (parsed.equals("source") || parsed.equals("docs")) {
+		if (user.equals(event.getBot().getNick()) &&
+		    (parsed.equals("source") || parsed.equals("docs"))) {
 		    result = this.SOURCE_URL;
 		}
             }
