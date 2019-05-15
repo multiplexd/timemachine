@@ -1,11 +1,11 @@
 /* See LICENSE file for license details */
 
-package xyz.inaddr.timemachine;
+package xyz.in_addr.timemachine;
 
 import java.io.IOException;
 
-import xyz.inaddr.timemachine.Configurator;
-import xyz.inaddr.timemachine.TimeMachine;
+import xyz.in_addr.timemachine.Configurator;
+import xyz.in_addr.timemachine.TimeMachine;
 
 import org.pircbotx.Configuration;
 import org.pircbotx.PircBotX;

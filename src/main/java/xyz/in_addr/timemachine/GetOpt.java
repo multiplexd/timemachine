@@ -1,6 +1,6 @@
 /* See LICENSE file for license details */
 
-package xyz.inaddr.timemachine;
+package xyz.in_addr.timemachine;
 
 import java.lang.IllegalArgumentException;
 

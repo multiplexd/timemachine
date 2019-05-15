@@ -1,6 +1,6 @@
 /* See LICENSE file for license details */
 
-package xyz.inaddr.timemachine;
+package xyz.in_addr.timemachine;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +9,7 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import xyz.inaddr.timemachine.GetOpt;
+import xyz.in_addr.timemachine.GetOpt;
 
 import jnr.posix.POSIX;
 import jnr.posix.POSIXFactory;
