@@ -251,24 +251,18 @@ public class TimeMachine extends ListenerAdapter {
         int offset;
         UserHist uhist;
         String ret;
-        int groups;
 
         match = this.SED_MATCH.matcher(message);
         if (!match.matches()) return null;
 
-        groups = match.groupCount();
         search = match.group(1);
         replace = match.group(2);
+        target = match.group(3);
+        offstring = match.group(4);
 
-        if (groups == 2 && replace.equals("")) {
+        if (target == null && offstring == null && replace.equals("")) {
             // catch s/foo/ form
             return null;
-        }
-
-        if (groups > 2) {
-            target = match.group(3);
-        } else {
-            target = null;
         }
 
         if (target == null || target.equals("")) {
@@ -281,12 +275,6 @@ public class TimeMachine extends ListenerAdapter {
 
         uhist = channel.getUser(target);
         if (uhist == null) return null;
-
-        if (groups > 2) {
-            offstring = match.group(4);
-        } else {
-            offstring = null;
-        }
 
         if (offstring == null || offstring.equals("")) {
             offset = 0;
