@@ -477,7 +477,8 @@ public class TimeMachine extends ListenerAdapter {
 		    // catch the special case where one user has a nick which is
 		    // a substring of another's
 		    ret = nick;
-		    matches = 1;
+                    matches = 1;
+                    break;
 		} else if (nick.startsWith(prefix)) {
                     ret = nick;
                     matches++;
