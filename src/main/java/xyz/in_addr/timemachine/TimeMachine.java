@@ -195,11 +195,14 @@ public class TimeMachine extends ListenerAdapter {
 	    result = this.recall(chist, user, parsed);
 	}
 
+	// do not add messages which activate a trigger to the user's
+	// message history, as it makes repeated edits difficult and
+	// confusing.
 	if (result != null) {
 	    event.getChannel().send().message(result);
+	} else {
+	    uhist.pushMsg(message, isctcp);
 	}
-
-        uhist.pushMsg(message, isctcp);
     }
 
     // recall a user's previous line
