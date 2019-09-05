@@ -515,12 +515,15 @@ public class TimeMachine extends ListenerAdapter {
         }
 
         void pushMsg(String line, boolean ctcp) {
-            UserMsg msg = new UserMsg(line, ctcp);
-            this.history.addFirst(msg);
+	    this.pushMsg(new UserMsg(line, ctcp));
+	}
 
-            if (this.history.size() > recall_limit)
-                this.history.removeLast();
-        }
+	void pushMsg(UserMsg msg) {
+	    this.history.addFirst(msg);
+
+	    if (this.history.size() > recall_limit)
+		this.history.removeLast();
+	}
 
         String searchReplace(String search, String replace, int offset) {
             String replacement, ret;
@@ -537,7 +540,7 @@ public class TimeMachine extends ListenerAdapter {
             }
 
             for (int i = 0; i < this.history.size(); i++) {
-                if (pat.matcher(this.history.get(i).topline()).find()) {
+                if (pat.matcher(this.history.get(i).line()).find()) {
                     if (offset > 0) {
                         offset -= 1;
                     } else {
@@ -549,16 +552,16 @@ public class TimeMachine extends ListenerAdapter {
 
             if (line == null) return null;
 
-            replacement = pat.matcher(line.topline()).replaceFirst(replace);
+            replacement = pat.matcher(line.line()).replaceFirst(replace);
             stars = new StringBuilder();
 
-            for (int i = 0; i < line.histsize(); i++)
+            for (int i = 0; i < line.revision() + 1; i++)
                 stars.append('*');
 
             ret = String.format(line.isctcp() ? this.ACTIONFMT : this.PRIVMSGFMT,
                                 stars.toString(), replacement);
 
-            line.pushline(replacement);
+	    this.pushMsg(line.revise(replacement));
 
             return ret;
         }
@@ -578,7 +581,7 @@ public class TimeMachine extends ListenerAdapter {
             }
 
             for (int i = 0; i < this.history.size(); i++) {
-                if (pat.matcher(this.history.get(i).topline()).find()) {
+                if (pat.matcher(this.history.get(i).line()).find()) {
                     if (offset > 0) {
                         offset -= 1;
                     } else {
@@ -590,10 +593,10 @@ public class TimeMachine extends ListenerAdapter {
 
             if (line == null) return null;
 
-            recalled = line.topline();
+            recalled = line.line();
             stars = new StringBuilder();
 
-            for (int i = 1; i < line.histsize(); i++)
+            for (int i = 1; i < line.revision() + 1; i++)
                 stars.append('*');
 
             return String.format(line.isctcp() ? this.ACTIONFMT : this.PRIVMSGFMT,
@@ -603,30 +606,35 @@ public class TimeMachine extends ListenerAdapter {
     }
 
     private class UserMsg {
-        private LinkedList<String> lines;
-        private final boolean isctcp;
+	private final String line;
+	private final boolean isctcp;
+	private final int revision;
 
-        UserMsg(String line, boolean ctcp) {
-            this.lines = new LinkedList<>();
-            this.lines.addFirst(line);
-            this.isctcp = ctcp;
-        }
+	UserMsg(String line, boolean ctcp) {
+	    this(line, ctcp, 0);
+	}
 
-        void pushline(String line) {
-            this.lines.addFirst(line);
-        }
+	UserMsg(String line, boolean ctcp, int revision) {
+	    this.line = line;
+	    this.isctcp = ctcp;
+	    this.revision = revision;
+	}
 
-        boolean isctcp() {
-            return this.isctcp;
-        }
+	boolean isctcp() {
+	    return this.isctcp;
+	}
 
-        String topline() {
-            return this.lines.peek();
-        }
+	String line() {
+	    return this.line;
+	}
 
-        int histsize() {
-            return this.lines.size();
-        }
+	int revision() {
+	    return this.revision;
+	}
+
+	UserMsg revise(String replacement) {
+	    return new UserMsg(replacement, this.isctcp, this.revision + 1);
+	}
     }
 }
 
