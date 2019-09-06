@@ -72,13 +72,12 @@ public class Configurator {
         Configuration.Builder builder;
         String host, nick, realname, ircname, nickserv, spass, env, modes;
         String[] split;
-        int port, recall;
+        int port, recall, opt, ret;
         boolean ssl;
         List<String> owners, autojoin;
         Set<String> ignores;
         POSIX p;
         GetOpt options;
-        int opt;
 
         host = null; port = 0; ssl = false; recall = 0;
         nick = null; realname = null; ircname = null; modes = null;
@@ -167,19 +166,21 @@ public class Configurator {
             // there are a *lot* of semi-broken networks around
             builder.setSocketFactory(new UtilSSLSocketFactory().trustAllCertificates());
 
-        p = POSIXFactory.getPOSIX();
+        p = POSIXFactory.getNativePOSIX();
 
         if (nickserv != null) {
             env = p.getenv(nickserv);
             exitIf(env == null, "could not find environment variable " + nickserv);
-            p.unsetenv(nickserv);
+            ret = p.unsetenv(nickserv);
+	    exitIf(ret != 0, "could not unset environment variable " + nickserv);
             builder.setNickservPassword(env).setNickservDelayJoin(true);
         }
 
         if (spass != null) {
             env = p.getenv(spass);
             exitIf(env == null, "could not find environment variable " + spass);
-            p.unsetenv(spass);
+            ret = p.unsetenv(spass);
+	    exitIf(ret != 0, "could not unset environment variable " + spass);
             builder.setServerPassword(env);
         }
 
