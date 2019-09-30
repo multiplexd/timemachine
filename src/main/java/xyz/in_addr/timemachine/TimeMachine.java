@@ -39,7 +39,7 @@ public class TimeMachine extends ListenerAdapter {
     private final Pattern PRINT_MATCH = Pattern.compile("^[pP]/((?:\\\\/|[^/])*)(?!\\\\)/([^ ~]*)((?:~[0-9]+)?)");
 
     private final Pattern ADDRESSED_MATCH = Pattern.compile("^[^,: /]+[,:]\\s+.*$");
-    private final String SOURCE_URL = "https://tildegit.org/multiplexd/timemachine"; // self documentation
+    private final String SOURCE_URL = "https://github.com/multiplexd/timemachine"; // self documentation
 
     // emulate the sound of the tardis when quitting
     private final String PART_MESSAGE = "*hooreeerwww... hooreeerwww... veeoom-eeom...*";

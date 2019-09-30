@@ -16,13 +16,14 @@ import org.pircbotx.hooks.managers.SequentialListenerManager;
  * Bot entry point.
  */
 public class Main {
-    public static void main (String[] args) throws IOException, IrcException, InterruptedException {
+    public static void main (String[] args) {
         Configurator.TMConfig config;
         Configuration.Builder builder;
         Configuration botconfig;
         SequentialListenerManager manager;
         TimeMachine machine;
         PircBotX ircbot;
+	boolean crashed;
 
         config = Configurator.loadConfig(args);
         builder = config.config;
@@ -38,13 +39,32 @@ public class Main {
         manager.addListenerSequential(machine);
         botconfig = builder.setListenerManager(manager).buildConfiguration();
 
-        ircbot = new PircBotX(botconfig);
-        ircbot.startBot();
+	do {
+	    crashed = false;
+	    try {
+		ircbot = new PircBotX(botconfig);
+		ircbot.startBot();
+	    } catch (IrcException ie) {
+		waitSomeTime();
+		crashed = true;
+	    } catch (IOException ioe) {
+		waitSomeTime();
+		crashed = true;
+	    }
+	} while (crashed);
 
 	// once the bot exits, give background threads some grace time then punt
 	// out.
-	Thread.sleep(5);
+	waitSomeTime();
 	System.exit(0);
+    }
+
+    private static void waitSomeTime() {
+	try {
+	    Thread.sleep(10);
+	} catch (InterruptedException ie) {
+	    // well, we tried
+	}
     }
 }
 
