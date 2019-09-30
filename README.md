@@ -13,11 +13,11 @@ strings (`s///`) and an inline history recall command (`p//`).
 building; issue
 
 ```
-mvn compile package
+mvn package
 ```
 
-to create a combined JAR file including all dependency libraries in the
-`target/` directory.
+to create a combined JAR file, `timemachine-unified.jar`, including
+all dependency libraries in the `target/` directory.
 
 ## Running
 
