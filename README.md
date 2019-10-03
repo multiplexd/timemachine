@@ -29,8 +29,8 @@ and the message history size limit must all be provided. Passworded servers and
 NickServ authentication are supported by passing the required password in an
 environment variable, the name of which is passed on the command line;
 `timemachine` will read the respective password and then erase it from the
-environment. Bot owners are specified by providing a series regular expressions
-which will match their hostmasks.
+environment. Bot owners are specified by providing a series of regular
+expressions which will match their hostmasks.
 
 ### User interface
 
@@ -83,6 +83,9 @@ are understood:
 - `unignore <nick>`: remove `nick` from the ignore list.
 
 - `quit`: quit and disconnect from the server.
+
+Additionally, `timemachine` will attempt to join channels when it receives an
+invite from a recognised owner.
 
 ## License
 

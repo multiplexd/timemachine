@@ -18,6 +18,7 @@ import org.pircbotx.Channel;
 import org.pircbotx.hooks.ListenerAdapter;
 import org.pircbotx.hooks.events.ActionEvent;
 import org.pircbotx.hooks.events.ConnectEvent;
+import org.pircbotx.hooks.events.InviteEvent;
 import org.pircbotx.hooks.events.JoinEvent;
 import org.pircbotx.hooks.events.KickEvent;
 import org.pircbotx.hooks.events.MessageEvent;
@@ -294,6 +295,17 @@ public class TimeMachine extends ListenerAdapter {
         if (ret == null) return null;
 
         return String.format(ret, target);
+    }
+
+    @Override
+    public void onInvite(InviteEvent event) {
+        OutputIRC out;
+
+        if (!isOwner(event.getUserHostmask().getHostmask()))
+            return;
+
+        out = event.getBot().sendIRC();
+        out.joinChannel(event.getChannel());
     }
 
     @Override
