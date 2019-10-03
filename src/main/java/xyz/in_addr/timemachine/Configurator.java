@@ -203,8 +203,6 @@ public class Configurator {
             }
         }
 
-        builder.addAutoJoinChannels(autojoin);
-
         return new TMConfig(builder, recall, ignores, owners, modes);
     }
 
