@@ -2,6 +2,8 @@
 
 package xyz.in_addr.timemachine;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -61,7 +63,7 @@ public class Configurator {
 
     private static void exitIf(boolean b, String msg) {
         if (b) {
-            System.out.println(msg);
+            System.err.println(msg);
             System.exit(1);
         }
 
@@ -70,7 +72,8 @@ public class Configurator {
     
     public static TMConfig loadConfig(String[] args) {
         Configuration.Builder builder;
-        String host, nick, realname, ircname, nickserv, spass, env, modes;
+        String host, nick, realname, sourcehost, ircname, nickserv, spass,
+	    env, modes;
         String[] split;
         int port, recall, opt, ret;
         boolean ssl;
@@ -78,15 +81,16 @@ public class Configurator {
         Set<String> ignores;
         POSIX p;
         GetOpt options;
+        InetAddress saddr;
 
-        host = null; port = 0; ssl = false; recall = 0;
+        host = null; port = 0; ssl = false; sourcehost = null; recall = 0;
         nick = null; realname = null; ircname = null; modes = null;
-        nickserv = null; spass = null;
+        nickserv = null; spass = null; saddr = null;
         ignores = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         owners = new ArrayList<>();
         autojoin = new ArrayList<>();
         
-        options = new GetOpt(args, ":hH:p:sn:i:r:N:k:m:l:I:O:A:", false);
+        options = new GetOpt(args, ":hH:p:sS:n:i:r:N:k:m:l:I:O:A:", false);
 
         while ((opt = options.getOpt()) != -1) {
             switch (opt) {
@@ -101,6 +105,9 @@ public class Configurator {
                 break;
             case 's':
                 ssl = true;
+                break;
+            case 'S':
+                sourcehost = options.optarg();
                 break;
             case 'n':
                 nick = options.optarg();
@@ -166,6 +173,17 @@ public class Configurator {
             // there are a *lot* of semi-broken networks around
             builder.setSocketFactory(new UtilSSLSocketFactory().trustAllCertificates());
 
+        if (sourcehost != null) {
+            try {
+                saddr = InetAddress.getByName(sourcehost);
+            } catch (UnknownHostException uhe) {
+                System.err.println("source host not found:" + sourcehost);
+                System.exit(1);
+            }
+
+            builder.setLocalAddress(saddr);
+        }
+
         p = POSIXFactory.getNativePOSIX();
 
         if (nickserv != null) {
@@ -212,6 +230,7 @@ public class Configurator {
             "        -H host   IRC server host\n" +
             "        -p port   IRC server port\n" +
             "        -s        Use TLS\n\n" +
+            "        -S addr   Source address for outgoing connection\n" +
             "        -n nick   Bot nick\n" +
             "        -i name   Bot ircname\n" +
             "        -r name   Bot realname\n\n" +
