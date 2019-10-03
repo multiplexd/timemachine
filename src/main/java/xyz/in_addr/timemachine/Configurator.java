@@ -140,12 +140,12 @@ public class Configurator {
                 autojoin.add(options.optarg());
                 break;
             case ':':
-                System.err.printf("expected argument to option: %c\n", options.optopt());
+                System.err.printf("expected argument to option: -%c\n", options.optopt());
                 System.exit(1);
                 break;
             case '?':
             default:
-                System.err.printf("unrecognised option: %c\n", options.optopt());
+                System.err.printf("unrecognised option: -%c\n", options.optopt());
                 System.exit(1);
                 break;
             }
