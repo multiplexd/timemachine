@@ -74,13 +74,16 @@ next matching line in the recorded history.
 matches one of the specified owner regular expressions. The following commands
 are understood:
 
-- `join <chan>`: join the `chan` channel.
+- `join <chan> [key]`: join the `chan` channel, optionally using `key` as the
+channel passphrase.
 
 - `part <chan>`: leave the `chan` channel.
 
 - `ignore <nick>`: add `nick` to the ignore list.
 
 - `unignore <nick>`: remove `nick` from the ignore list.
+
+- `say <chan> <msg...>`: say `msg` on the `chan` channel.
 
 - `quit`: quit and disconnect from the server.
 
