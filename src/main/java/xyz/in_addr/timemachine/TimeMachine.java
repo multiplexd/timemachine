@@ -105,6 +105,13 @@ public class TimeMachine extends ListenerAdapter {
         case "unignore":
             this.ignorelist.remove(split[1]);
             break;
+	case "say":
+	    if (split.length > 2 &&
+		    event.getBot().getUserChannelDao().containsChannel(split[1])) {
+		event.getBot().getUserChannelDao()
+		    .getChannel(split[1]).send().message(split[2]);
+	    }
+	    break;
         }
 
         return;
