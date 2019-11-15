@@ -23,48 +23,50 @@ public class Main {
         SequentialListenerManager manager;
         TimeMachine machine;
         PircBotX ircbot;
-	boolean crashed;
+        boolean crashed;
 
         config = Configurator.loadConfig(args);
-        builder = config.config;
-        manager = SequentialListenerManager.builder().build();
-        machine = new TimeMachine(config.recalllimit,
-                                  config.ignorelist,
-                                  config.ownerlist,
-                                  config.initialmodes);
 
-        // we use a sequential listener manager because the data structure
-        // manipulation in TimeMachine is not thread-safe. this might be slow,
-        // but it guarantees data consistency.
-        manager.addListenerSequential(machine);
-        botconfig = builder.setListenerManager(manager).buildConfiguration();
+        do {
+            crashed = false;
 
-	do {
-	    crashed = false;
-	    try {
-		ircbot = new PircBotX(botconfig);
-		ircbot.startBot();
-	    } catch (IrcException ie) {
-		waitSomeTime();
-		crashed = true;
-	    } catch (IOException ioe) {
-		waitSomeTime();
-		crashed = true;
-	    }
-	} while (crashed);
+            builder = config.config;
+            machine = new TimeMachine(config.recalllimit, config.ignorelist,
+                    config.ownerlist, config.initialmodes);
 
-	// once the bot exits, give background threads some grace time then punt
-	// out.
-	waitSomeTime();
-	System.exit(0);
+            // we use a sequential listener manager because the data
+            // structure manipulation in TimeMachine is not
+            // thread-safe. this might be slow, but it guarantees data
+            // consistency.
+            manager = SequentialListenerManager.builder().build();
+
+            manager.addListenerSequential(machine);
+            botconfig = builder.setListenerManager(manager).buildConfiguration();
+
+            try {
+                ircbot = new PircBotX(botconfig);
+                ircbot.startBot();
+            } catch (IrcException ie) {
+                waitSomeTime();
+                crashed = true;
+            } catch (IOException ioe) {
+                waitSomeTime();
+                crashed = true;
+            }
+        } while (crashed);
+
+        // once the bot exits, give background threads some grace time then punt
+        // out.
+        waitSomeTime();
+        System.exit(0);
     }
 
     private static void waitSomeTime() {
-	try {
-	    Thread.sleep(10);
-	} catch (InterruptedException ie) {
-	    // well, we tried
-	}
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException ie) {
+            // well, we tried
+        }
     }
 }
 

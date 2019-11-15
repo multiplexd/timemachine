@@ -105,13 +105,13 @@ public class TimeMachine extends ListenerAdapter {
         case "unignore":
             this.ignorelist.remove(split[1]);
             break;
-	case "say":
-	    if (split.length > 2 &&
-		    event.getBot().getUserChannelDao().containsChannel(split[1])) {
-		event.getBot().getUserChannelDao()
-		    .getChannel(split[1]).send().message(split[2]);
-	    }
-	    break;
+        case "say":
+            if (split.length > 2 &&
+                    event.getBot().getUserChannelDao().containsChannel(split[1])) {
+                event.getBot().getUserChannelDao()
+                    .getChannel(split[1]).send().message(split[2]);
+            }
+            break;
         }
 
         return;
@@ -132,13 +132,13 @@ public class TimeMachine extends ListenerAdapter {
 
         return false;
     }
-    
+
     @Override
     public void onConnect(ConnectEvent event) {
-	// set user modes when connected
-	if (this.initmodes != null) {
+        // set user modes when connected
+        if (this.initmodes != null) {
             event.getBot().sendIRC().mode(event.getBot().getNick(), this.initmodes);
-	}
+        }
     }
 
     @Override
@@ -175,7 +175,7 @@ public class TimeMachine extends ListenerAdapter {
         message = event.getMessage();
         parsed = message;
 
-	result = null;
+        result = null;
 
         // handle messages of the format "bob: s/foo/bar" by splitting into nick
         // and line, and then setting the default target of any possible recall
@@ -187,30 +187,30 @@ public class TimeMachine extends ListenerAdapter {
                 user = split[0];
                 parsed = split[1];
 
-		// check for magic commands to return source URL
-		if (user.equals(event.getBot().getNick()) &&
-		    (parsed.equals("source") || parsed.equals("docs"))) {
-		    result = this.SOURCE_URL;
-		}
+                // check for magic commands to return source URL
+                if (user.equals(event.getBot().getNick()) &&
+                    (parsed.equals("source") || parsed.equals("docs"))) {
+                    result = this.SOURCE_URL;
+                }
             }
         }
 
-	if (result == null) {
-	    result = this.searchReplace(chist, user, parsed);
-	}
+        if (result == null) {
+            result = this.searchReplace(chist, user, parsed);
+        }
 
-	if (result == null) {
-	    result = this.recall(chist, user, parsed);
-	}
+        if (result == null) {
+            result = this.recall(chist, user, parsed);
+        }
 
-	// do not add messages which activate a trigger to the user's
-	// message history, as it makes repeated edits difficult and
-	// confusing.
-	if (result != null) {
-	    event.getChannel().send().message(result);
-	} else {
-	    uhist.pushMsg(message, isctcp);
-	}
+        // do not add messages which activate a trigger to the user's
+        // message history, as it makes repeated edits difficult and
+        // confusing.
+        if (result != null) {
+            event.getChannel().send().message(result);
+        } else {
+            uhist.pushMsg(message, isctcp);
+        }
     }
 
     // recall a user's previous line
@@ -318,7 +318,7 @@ public class TimeMachine extends ListenerAdapter {
     @Override
     public void onJoin(JoinEvent event) {
         ChannelHist hist;
-        
+
         if (event.getUser().getNick().equalsIgnoreCase(event.getBot().getNick())) {
             // if the join event is for this bot, then set up state for the
             // joined channel and return -- we need further events to occur
@@ -394,7 +394,7 @@ public class TimeMachine extends ListenerAdapter {
             // ignore our own nick changes
             return;
 
-	// change key under which user message history is stored
+        // change key under which user message history is stored
         this.log.channelNick(event.getOldNick(), event.getNewNick());
 
         return;
@@ -419,7 +419,7 @@ public class TimeMachine extends ListenerAdapter {
             return this.history.get(channel);
         }
 
-	// add users to channel from populated Channel object
+        // add users to channel from populated Channel object
         void populateChannel(Channel channel) {
             ChannelHist hist;
             UnmodifiableIterator<String> nicks;
@@ -436,7 +436,7 @@ public class TimeMachine extends ListenerAdapter {
             }
         }
 
-	// rekey channel history for all channels on nick change
+        // rekey channel history for all channels on nick change
         void channelNick(String oldnick, String newnick) {
             for (ChannelHist channel: this.history.values()) {
                 channel.userNick(oldnick, newnick);
@@ -495,13 +495,13 @@ public class TimeMachine extends ListenerAdapter {
             users = this.history.keySet().iterator();
             while (users.hasNext()) {
                 nick = users.next();
-		if (nick.equals(prefix)) {
-		    // catch the special case where one user has a nick which is
-		    // a substring of another's
-		    ret = nick;
+                if (nick.equals(prefix)) {
+                    // catch the special case where one user has a nick which is
+                    // a substring of another's
+                    ret = nick;
                     matches = 1;
                     break;
-		} else if (nick.startsWith(prefix)) {
+                } else if (nick.startsWith(prefix)) {
                     ret = nick;
                     matches++;
                 }
@@ -514,7 +514,7 @@ public class TimeMachine extends ListenerAdapter {
             }
         }
 
-	// change user nick if user is present
+        // change user nick if user is present
         void userNick(String oldnick, String newnick) {
             UserHist hist = this.history.remove(oldnick);
             if (hist != null)
@@ -534,15 +534,15 @@ public class TimeMachine extends ListenerAdapter {
         }
 
         void pushMsg(String line, boolean ctcp) {
-	    this.pushMsg(new UserMsg(line, ctcp));
-	}
+            this.pushMsg(new UserMsg(line, ctcp));
+        }
 
-	void pushMsg(UserMsg msg) {
-	    this.history.addFirst(msg);
+        void pushMsg(UserMsg msg) {
+            this.history.addFirst(msg);
 
-	    if (this.history.size() > recall_limit)
-		this.history.removeLast();
-	}
+            if (this.history.size() > recall_limit)
+                this.history.removeLast();
+        }
 
         String searchReplace(String search, String replace, int offset) {
             String replacement, ret;
@@ -580,7 +580,7 @@ public class TimeMachine extends ListenerAdapter {
             ret = String.format(line.isctcp() ? this.ACTIONFMT : this.PRIVMSGFMT,
                                 stars.toString(), replacement);
 
-	    this.pushMsg(line.revise(replacement));
+            this.pushMsg(line.revise(replacement));
 
             return ret;
         }
@@ -621,39 +621,39 @@ public class TimeMachine extends ListenerAdapter {
             return String.format(line.isctcp() ? this.ACTIONFMT : this.PRIVMSGFMT,
                                  stars.toString(), recalled);
         }
-    
+
     }
 
     private class UserMsg {
-	private final String line;
-	private final boolean isctcp;
-	private final int revision;
+        private final String line;
+        private final boolean isctcp;
+        private final int revision;
 
-	UserMsg(String line, boolean ctcp) {
-	    this(line, ctcp, 0);
-	}
+        UserMsg(String line, boolean ctcp) {
+            this(line, ctcp, 0);
+        }
 
-	UserMsg(String line, boolean ctcp, int revision) {
-	    this.line = line;
-	    this.isctcp = ctcp;
-	    this.revision = revision;
-	}
+        UserMsg(String line, boolean ctcp, int revision) {
+            this.line = line;
+            this.isctcp = ctcp;
+            this.revision = revision;
+        }
 
-	boolean isctcp() {
-	    return this.isctcp;
-	}
+        boolean isctcp() {
+            return this.isctcp;
+        }
 
-	String line() {
-	    return this.line;
-	}
+        String line() {
+            return this.line;
+        }
 
-	int revision() {
-	    return this.revision;
-	}
+        int revision() {
+            return this.revision;
+        }
 
-	UserMsg revise(String replacement) {
-	    return new UserMsg(replacement, this.isctcp, this.revision + 1);
-	}
+        UserMsg revise(String replacement) {
+            return new UserMsg(replacement, this.isctcp, this.revision + 1);
+        }
     }
 }
 

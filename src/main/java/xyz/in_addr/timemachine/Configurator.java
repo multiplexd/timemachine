@@ -69,11 +69,11 @@ public class Configurator {
 
         return;
     }
-    
+
     public static TMConfig loadConfig(String[] args) {
         Configuration.Builder builder;
         String host, nick, realname, sourcehost, ircname, nickserv, spass,
-	    env, modes;
+            env, modes;
         String[] split;
         int port, recall, opt, ret;
         boolean ssl;
@@ -89,14 +89,14 @@ public class Configurator {
         ignores = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         owners = new ArrayList<>();
         autojoin = new ArrayList<>();
-        
+
         options = new GetOpt(args, ":hH:p:sS:n:i:r:N:k:m:l:I:O:A:", false);
 
         while ((opt = options.getOpt()) != -1) {
             switch (opt) {
-	    case 'h':
-		printUsage();
-		break;
+            case 'h':
+                printUsage();
+                break;
             case 'H':
                 host = options.optarg();
                 break;
@@ -190,7 +190,7 @@ public class Configurator {
             env = p.getenv(nickserv);
             exitIf(env == null, "could not find environment variable " + nickserv);
             ret = p.unsetenv(nickserv);
-	    exitIf(ret != 0, "could not unset environment variable " + nickserv);
+            exitIf(ret != 0, "could not unset environment variable " + nickserv);
             builder.setNickservPassword(env).setNickservDelayJoin(true);
         }
 
@@ -198,7 +198,7 @@ public class Configurator {
             env = p.getenv(spass);
             exitIf(env == null, "could not find environment variable " + spass);
             ret = p.unsetenv(spass);
-	    exitIf(ret != 0, "could not unset environment variable " + spass);
+            exitIf(ret != 0, "could not unset environment variable " + spass);
             builder.setServerPassword(env);
         }
 
@@ -225,7 +225,7 @@ public class Configurator {
     }
 
     private static void printUsage() {
-	String usage = "Usage: java -jar timemachine.jar <flags>\n\n" +
+        String usage = "Usage: java -jar timemachine.jar <flags>\n\n" +
             "        -h        Display this help\n" +
             "        -H host   IRC server host\n" +
             "        -p port   IRC server port\n" +
@@ -244,8 +244,8 @@ public class Configurator {
             "                  channel key may be provided by separating channel and key with colon,\n" +
             "                  e.g. #foo:key\n";
 
-	System.out.print(usage);
-	System.exit(0);
+        System.out.print(usage);
+        System.exit(0);
     }
 }
 

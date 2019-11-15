@@ -49,7 +49,7 @@ public final class GetOpt {
         if (optstring.length() == 0 || (optstring.length() == 1 && optstring.charAt(0) == ':')) {
             throw new IllegalArgumentException();
         }
-        
+
         this.optstring = optstring;
         this.args = args;
         this.opterr = printmsg;
@@ -92,7 +92,7 @@ public final class GetOpt {
         this.optarg = null; // Reset in case the next option we parse has an argument
 
         // Check for further options in argument vector
-        
+
         if (optind >= this.args.length) {
             return -1;
         } else if (this.args[optind].length() == 0) {
@@ -143,7 +143,7 @@ public final class GetOpt {
                 if (opterr) {
                     System.err.printf("Option requires an argument: '%c'\n", optchar);
                 }
-                
+
                 return '?';
             }
 
