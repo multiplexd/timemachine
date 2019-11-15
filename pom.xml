@@ -53,7 +53,7 @@
       <!-- fat jar with all dependencies -->
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
-	<version>2.4.3</version>
+	<version>3.2.1</version>
 	<executions>
 	  <execution>
 	    <phase>package</phase>
@@ -81,21 +81,6 @@
             <source>1.8</source>
             <target>1.8</target>
             <compilerArgs> <arg>-Xlint:deprecation</arg> </compilerArgs>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.6.0</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>java</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <mainClass>xyz.in_addr.timemachine.Main</mainClass>
         </configuration>
       </plugin>
     </plugins>
