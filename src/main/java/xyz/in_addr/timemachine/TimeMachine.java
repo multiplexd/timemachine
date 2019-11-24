@@ -36,10 +36,10 @@ import org.pircbotx.output.OutputIRC;
 public class TimeMachine extends ListenerAdapter {
     // substitution and recall commands -- regexen originally by puck
     // (puckipedia.com), later manglified by multiplexd.
-    private final Pattern SED_MATCH = Pattern.compile("^[sS]/((?:\\\\/|[^/])*)(?!\\\\)/((?:\\\\/|[^/])*)(?:/([^ ~]*)((?:~[0-9]+)?))?.*$");
-    private final Pattern PRINT_MATCH = Pattern.compile("^[pP]/((?:\\\\/|[^/])*)(?!\\\\)/([^ ~]*)((?:~[0-9]+)?).*$");
+    private final Pattern SED_MATCH = Pattern.compile("^[sS]/((?:\\\\/|[^/])*)(?!\\\\)/((?:\\\\/|[^/])*)(?:/([^ ~]*)((?:~[0-9]+)?))?");
+    private final Pattern PRINT_MATCH = Pattern.compile("^[pP]/((?:\\\\/|[^/])*)(?!\\\\)/([^ ~]*)((?:~[0-9]+)?)");
 
-    private final Pattern ADDRESSED_MATCH = Pattern.compile("^[^,: /]+[,:]\\s+.*$");
+    private final Pattern ADDRESSED_MATCH = Pattern.compile("^[^,: /]+[,:]\\s+");
     private final String SOURCE_URL = "https://github.com/multiplexd/timemachine"; // self documentation
 
     // emulate the sound of the tardis when quitting
@@ -180,7 +180,7 @@ public class TimeMachine extends ListenerAdapter {
         // handle messages of the format "bob: s/foo/bar" by splitting into nick
         // and line, and then setting the default target of any possible recall
         // or search/replace to the addressed user.
-        if (!isctcp && this.ADDRESSED_MATCH.matcher(message).matches()) {
+        if (!isctcp && this.ADDRESSED_MATCH.matcher(message).find()) {
             split = message.split("[:,]\\s+", 2);
 
             if (split.length > 1) {
@@ -222,7 +222,7 @@ public class TimeMachine extends ListenerAdapter {
         String ret;
 
         match = this.PRINT_MATCH.matcher(message);
-        if (!match.matches()) return null;
+        if (!match.find()) return null;
 
         search = match.group(1);
         target = match.group(2);
@@ -264,7 +264,7 @@ public class TimeMachine extends ListenerAdapter {
         String ret;
 
         match = this.SED_MATCH.matcher(message);
-        if (!match.matches()) return null;
+        if (!match.find()) return null;
 
         search = match.group(1);
         replace = match.group(2);
