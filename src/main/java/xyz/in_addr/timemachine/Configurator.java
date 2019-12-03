@@ -13,8 +13,6 @@ import java.util.regex.PatternSyntaxException;
 
 import xyz.in_addr.timemachine.GetOpt;
 
-import jnr.posix.POSIX;
-import jnr.posix.POSIXFactory;
 import org.pircbotx.Configuration;
 import org.pircbotx.UtilSSLSocketFactory;
 import org.pircbotx.delay.BinaryBackoffDelay;
@@ -79,7 +77,6 @@ public class Configurator {
         boolean ssl;
         List<String> owners, autojoin;
         Set<String> ignores;
-        POSIX p;
         GetOpt options;
         InetAddress saddr;
 
@@ -184,21 +181,15 @@ public class Configurator {
             builder.setLocalAddress(saddr);
         }
 
-        p = POSIXFactory.getNativePOSIX();
-
         if (nickserv != null) {
-            env = p.getenv(nickserv);
+            env = System.getenv(nickserv);
             exitIf(env == null, "could not find environment variable " + nickserv);
-            ret = p.unsetenv(nickserv);
-            exitIf(ret != 0, "could not unset environment variable " + nickserv);
             builder.setNickservPassword(env).setNickservDelayJoin(true);
         }
 
         if (spass != null) {
-            env = p.getenv(spass);
+            env = System.getenv(spass);
             exitIf(env == null, "could not find environment variable " + spass);
-            ret = p.unsetenv(spass);
-            exitIf(ret != 0, "could not unset environment variable " + spass);
             builder.setServerPassword(env);
         }
 
