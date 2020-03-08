@@ -25,12 +25,12 @@ all dependency libraries in the `target/` directory.
 
 Run the generated JAR file with the `-h` flag to obtain a definitive list of
 flags. The IRC server hostname and port, the bot's nick, ircname, and realname,
-and the message history size limit must all be provided. Passworded servers and
-NickServ authentication are supported by passing the required password in an
-environment variable, the name of which is passed on the command line;
-`timemachine` will read the respective password and then erase it from the
-environment. Bot owners are specified by providing a series of regular
-expressions which will match their hostmasks.
+and the message history size limit must all be provided. Passworded servers
+and NickServ authentication are supported by passing the required password
+in an environment variable, the name of which is passed on the command line;
+`timemachine` will read the respective password from the environment. Bot
+owners are specified by providing a series of regular expressions which will
+match their hostmasks.
 
 ### User interface
 
