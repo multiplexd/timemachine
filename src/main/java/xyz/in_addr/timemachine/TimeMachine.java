@@ -42,6 +42,9 @@ public class TimeMachine extends ListenerAdapter {
     private final Pattern ADDRESSED_MATCH = Pattern.compile("^[^,: /]+[,:]\\s+");
     private final String SOURCE_URL = "https://github.com/multiplexd/timemachine"; // self documentation
 
+    private final Pattern BOTSNACK_MATCH = Pattern.compile("^\\s*botsnack\\s*$");
+    private final String BOTSNACK_RESPONSE = ":D";
+
     // emulate the sound of the tardis when quitting
     private final String PART_MESSAGE = "*hooreeerwww... hooreeerwww... veeoom-eeom...*";
 
@@ -177,10 +180,13 @@ public class TimeMachine extends ListenerAdapter {
 
         result = null;
 
-        // handle messages of the format "bob: s/foo/bar" by splitting into nick
-        // and line, and then setting the default target of any possible recall
-        // or search/replace to the addressed user.
-        if (!isctcp && this.ADDRESSED_MATCH.matcher(message).find()) {
+        if (!isctcp && this.BOTSNACK_MATCH.matcher(message).matches()) {
+            // standard #xkcd botsnack protocol response
+            result = this.BOTSNACK_RESPONSE;
+        } else if (!isctcp && this.ADDRESSED_MATCH.matcher(message).find()) {
+            // handle messages of the format "bob: s/foo/bar" by splitting into
+            // nick and line, and then setting the default target of any possible
+            // recall or search/replace to the addressed user.
             split = message.split("[:,]\\s+", 2);
 
             if (split.length > 1) {
