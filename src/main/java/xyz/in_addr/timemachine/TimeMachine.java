@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
@@ -156,10 +157,11 @@ public class TimeMachine extends ListenerAdapter {
 
     // handle public messages to channels 
     private <T extends GenericMessageEvent & GenericChannelUserEvent> void messageDriver(T event, boolean isctcp) {
-        String channel, user, message, parsed, result;
+        String channel, user, message, parsed;
         String[] split;
         ChannelHist chist;
         UserHist uhist;
+        Optional<String> result;
 
         this.log.populateChannel(event.getChannel());
 
@@ -182,7 +184,7 @@ public class TimeMachine extends ListenerAdapter {
 
         if (!isctcp && this.BOTSNACK_MATCH.matcher(message).matches()) {
             // standard #xkcd botsnack protocol response
-            result = this.BOTSNACK_RESPONSE;
+            result = Optional.of(this.BOTSNACK_RESPONSE);
         } else if (!isctcp && this.ADDRESSED_MATCH.matcher(message).find()) {
             // handle messages of the format "bob: s/foo/bar" by splitting into
             // nick and line, and then setting the default target of any possible
@@ -196,7 +198,7 @@ public class TimeMachine extends ListenerAdapter {
                 // check for magic commands to return source URL
                 if (user.equals(event.getBot().getNick()) &&
                     (parsed.equals("source") || parsed.equals("docs"))) {
-                    result = this.SOURCE_URL;
+                    result = Optional.of(this.SOURCE_URL);
                 }
             }
         }
@@ -209,18 +211,18 @@ public class TimeMachine extends ListenerAdapter {
             result = this.recall(chist, user, parsed);
         }
 
-        // do not add messages which activate a trigger to the user's
-        // message history, as it makes repeated edits difficult and
-        // confusing.
+        // do not add messages which activate a trigger to the user's message
+        // history. doing so makes it difficult and confusing to perform repeated
+        // edits.
         if (result != null) {
-            event.getChannel().send().message(result);
+            result.ifPresent((str) -> event.getChannel().send().message(str));
         } else {
             uhist.pushMsg(message, isctcp);
         }
     }
 
     // recall a user's previous line
-    private String recall(ChannelHist channel, String user, String message) {
+    private Optional<String> recall(ChannelHist channel, String user, String message) {
         Matcher match;
         String search, target;
         int offset;
@@ -228,7 +230,7 @@ public class TimeMachine extends ListenerAdapter {
         String ret;
 
         match = this.PRINT_MATCH.matcher(message);
-        if (!match.find()) return null;
+        if (!match.find()) return Optional.empty();
 
         search = match.group(1);
         target = match.group(2);
@@ -239,10 +241,10 @@ public class TimeMachine extends ListenerAdapter {
             target = channel.expandUniquePrefix(target);
         }
 
-        if (target == null) return null;
+        if (target == null) return Optional.empty();
 
         uhist = channel.getUser(target);
-        if (uhist == null) return null;
+        if (uhist == null) return Optional.empty();
 
         if (match.group(3).equals("")) {
             offset = 0;
@@ -251,18 +253,18 @@ public class TimeMachine extends ListenerAdapter {
                 // remove leading tilde
                 offset = Integer.parseUnsignedInt(match.group(3).substring(1));
             } catch (NumberFormatException nfe) {
-                return null;
+                return Optional.empty();
             }
         }
 
         ret = uhist.recall(search, offset);
-        if (ret == null) return null;
+        if (ret == null) return Optional.empty();
 
-        return String.format(ret, target);
+        return Optional.of(String.format(ret, target));
     }
 
     // perform a regex search and replace on a user's line
-    private String searchReplace(ChannelHist channel, String user, String message) {
+    private Optional<String> searchReplace(ChannelHist channel, String user, String message) {
         Matcher match;
         String search, replace, target, offstring;
         int offset;
@@ -270,7 +272,7 @@ public class TimeMachine extends ListenerAdapter {
         String ret;
 
         match = this.SED_MATCH.matcher(message);
-        if (!match.find()) return null;
+        if (!match.find()) return Optional.empty();
 
         search = match.group(1);
         replace = match.group(2);
@@ -279,7 +281,7 @@ public class TimeMachine extends ListenerAdapter {
 
         if (target == null && offstring == null && replace.equals("")) {
             // catch s/foo/ form
-            return null;
+            return Optional.empty();
         }
 
         if (target == null || target.equals("")) {
@@ -288,10 +290,10 @@ public class TimeMachine extends ListenerAdapter {
             target = channel.expandUniquePrefix(target);
         }
 
-        if (target == null) return null;
+        if (target == null) return Optional.empty();
 
         uhist = channel.getUser(target);
-        if (uhist == null) return null;
+        if (uhist == null) return Optional.empty();
 
         if (offstring == null || offstring.equals("")) {
             offset = 0;
@@ -300,14 +302,14 @@ public class TimeMachine extends ListenerAdapter {
                 // remove leading tilde
                 offset = Integer.parseUnsignedInt(match.group(4).substring(1));
             } catch (NumberFormatException nfe) {
-                return null;
+                return Optional.empty();
             }
         }
 
         ret = uhist.searchReplace(search, replace, offset);
-        if (ret == null) return null;
+        if (ret == null) return Optional.empty();
 
-        return String.format(ret, target);
+        return Optional.of(String.format(ret, target));
     }
 
     @Override
