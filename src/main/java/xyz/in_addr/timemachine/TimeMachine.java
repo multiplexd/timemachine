@@ -230,7 +230,7 @@ public class TimeMachine extends ListenerAdapter {
         String ret;
 
         match = this.PRINT_MATCH.matcher(message);
-        if (!match.find()) return Optional.empty();
+        if (!match.find()) return null;
 
         search = match.group(1);
         target = match.group(2);
@@ -272,7 +272,7 @@ public class TimeMachine extends ListenerAdapter {
         String ret;
 
         match = this.SED_MATCH.matcher(message);
-        if (!match.find()) return Optional.empty();
+        if (!match.find()) return null;
 
         search = match.group(1);
         replace = match.group(2);
