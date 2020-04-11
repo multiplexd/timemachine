@@ -20,53 +20,28 @@ public class Main {
         Configurator.TMConfig config;
         Configuration.Builder builder;
         Configuration botconfig;
-        SequentialListenerManager manager;
         TimeMachine machine;
-        PircBotX ircbot;
-        boolean crashed;
+        PircBotX bot;
 
         config = Configurator.loadConfig(args);
 
-        do {
-            crashed = false;
+        builder = config.config;
+        machine = new TimeMachine(config.recalllimit, config.ignorelist,
+                                  config.ownerlist, config.initialmodes);
+        botconfig = builder.addListener(machine).buildConfiguration();
+        bot = new PircBotX(botconfig);
 
-            builder = config.config;
-            machine = new TimeMachine(config.recalllimit, config.ignorelist,
-                    config.ownerlist, config.initialmodes);
-
-            // we use a sequential listener manager because the data
-            // structure manipulation in TimeMachine is not
-            // thread-safe. this might be slow, but it guarantees data
-            // consistency.
-            manager = SequentialListenerManager.builder().build();
-
-            manager.addListenerSequential(machine);
-            botconfig = builder.setListenerManager(manager).buildConfiguration();
-
-            try {
-                ircbot = new PircBotX(botconfig);
-                ircbot.startBot();
-            } catch (IrcException ie) {
-                waitSomeTime();
-                crashed = true;
-            } catch (IOException ioe) {
-                waitSomeTime();
-                crashed = true;
-            }
-        } while (crashed);
-
-        // once the bot exits, give background threads some grace time then punt
-        // out.
-        waitSomeTime();
-        System.exit(0);
-    }
-
-    private static void waitSomeTime() {
         try {
-            Thread.sleep(10);
-        } catch (InterruptedException ie) {
-            // well, we tried
+            bot.startBot();
+        } catch (IrcException ie) {
+            System.err.println("Encountered IRC exception: " + ie.getMessage());
+            System.exit(1);
+        } catch (IOException ioe) {
+            System.err.println("Encountered IO exception: " + ioe.getMessage());
+            System.exit(1);
         }
+
+        System.exit(0);
     }
 }
 

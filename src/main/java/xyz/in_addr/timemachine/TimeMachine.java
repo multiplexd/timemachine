@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -49,6 +50,8 @@ public class TimeMachine extends ListenerAdapter {
     // emulate the sound of the tardis when quitting
     private final String PART_MESSAGE = "*hooreeerwww... hooreeerwww... veeoom-eeom...*";
 
+    private final ReentrantLock ignorelock;
+    private final ReentrantLock loglock;
     private Set<String> ignorelist;
     private List<String> ownerlist;
     private final int recall_limit;
@@ -61,6 +64,9 @@ public class TimeMachine extends ListenerAdapter {
         this.ownerlist = ol;
         this.initmodes = m;
         this.log = new MessageLog();
+
+        this.ignorelock = new ReentrantLock(true);
+        this.loglock = new ReentrantLock(true);
     }
 
     // administrative interface
@@ -104,10 +110,14 @@ public class TimeMachine extends ListenerAdapter {
             }
             break;
         case "ignore":
+            this.ignorelock.lock();
             this.ignorelist.add(split[1]);
+            this.ignorelock.unlock();
             break;
         case "unignore":
+            this.ignorelock.lock();
             this.ignorelist.remove(split[1]);
+            this.ignorelock.unlock();
             break;
         case "say":
             if (split.length > 2 &&
@@ -147,12 +157,16 @@ public class TimeMachine extends ListenerAdapter {
 
     @Override
     public void onMessage(MessageEvent event) {
+        this.loglock.lock();
         this.messageDriver(event, false);
+        this.loglock.unlock();
     }
 
     @Override
     public void onAction(ActionEvent event) {
+        this.loglock.lock();
         this.messageDriver(event, true);
+        this.loglock.unlock();
     }
 
     // handle public messages to channels 
@@ -162,13 +176,18 @@ public class TimeMachine extends ListenerAdapter {
         ChannelHist chist;
         UserHist uhist;
         Optional<String> result;
+        boolean ignored;
 
         this.log.populateChannel(event.getChannel());
 
         channel = event.getChannel().getName();
         user = event.getUser().getNick();
 
-        if (this.ignorelist.contains(user))
+        this.ignorelock.lock();
+        ignored = this.ignorelist.contains(user);
+        this.ignorelock.unlock();
+
+        if (ignored)
             return;
 
         chist = this.log.getChannel(channel);
@@ -327,11 +346,15 @@ public class TimeMachine extends ListenerAdapter {
     public void onJoin(JoinEvent event) {
         ChannelHist hist;
 
+        this.loglock.lock();
+
         if (event.getUser().getNick().equalsIgnoreCase(event.getBot().getNick())) {
             // if the join event is for this bot, then set up state for the
             // joined channel and return -- we need further events to occur
             // for the list of users on this channel to become available.
             this.log.addChannel(event.getChannel().getName());
+
+            this.loglock.unlock();
             return;
         }
 
@@ -341,6 +364,7 @@ public class TimeMachine extends ListenerAdapter {
         if (hist != null)
             hist.addUser(event.getUser().getNick());
 
+        this.loglock.unlock();
         return;
     }
 
@@ -348,9 +372,13 @@ public class TimeMachine extends ListenerAdapter {
     public void onPart(PartEvent event) {
         ChannelHist hist;
 
+        this.loglock.lock();
+
         if (event.getUser().getNick().equalsIgnoreCase(event.getBot().getNick())) {
             // we parted the channel
             this.log.delChannel(event.getChannel().getName());
+
+            this.loglock.unlock();
             return;
         }
 
@@ -361,6 +389,7 @@ public class TimeMachine extends ListenerAdapter {
         if (hist != null)
             hist.delUser(event.getUser().getNick());
 
+        this.loglock.unlock();
         return;
     }
 
@@ -368,9 +397,13 @@ public class TimeMachine extends ListenerAdapter {
     public void onKick(KickEvent event) {
         ChannelHist hist;
 
+        this.loglock.unlock();
+
         if (event.getRecipient().getNick().equalsIgnoreCase(event.getBot().getNick())) {
             // we were kicked from the channel
             this.log.delChannel(event.getChannel().getName());
+
+            this.loglock.unlock();
             return;
         }
 
@@ -380,6 +413,8 @@ public class TimeMachine extends ListenerAdapter {
         hist = this.log.getChannel(event.getChannel().getName());
         if (hist != null)
             hist.delUser(event.getRecipient().getNick());
+
+        this.loglock.unlock();
         return;
     }
 
@@ -390,7 +425,9 @@ public class TimeMachine extends ListenerAdapter {
             return;
 
         // delete user from channel message logs
+        this.loglock.lock();
         this.log.deleteNick(event.getUser().getNick());
+        this.loglock.unlock();
 
         return;
     }
@@ -403,7 +440,9 @@ public class TimeMachine extends ListenerAdapter {
             return;
 
         // change key under which user message history is stored
+        this.loglock.lock();
         this.log.channelNick(event.getOldNick(), event.getNewNick());
+        this.loglock.unlock();
 
         return;
     }
