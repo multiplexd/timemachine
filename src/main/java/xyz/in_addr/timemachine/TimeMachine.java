@@ -38,8 +38,8 @@ import org.pircbotx.output.OutputIRC;
 public class TimeMachine extends ListenerAdapter {
     // substitution and recall commands -- regexen originally by puck
     // (puckipedia.com), later manglified by multiplexd.
-    private final Pattern SED_MATCH = Pattern.compile("^[sS]/((?:\\\\/|[^/])*)(?!\\\\)/((?:\\\\/|[^/])*)(?:/([^ ~]*)((?:~[0-9]+)?))?");
-    private final Pattern PRINT_MATCH = Pattern.compile("^[pP]/((?:\\\\/|[^/])*)(?!\\\\)/([^ ~]*)((?:~[0-9]+)?)");
+    private final Pattern SED_MATCH = Pattern.compile("^[sS]/((?:\\\\/|[^/])*)(?!\\\\)/((?:\\\\/|[^/])*)(?:/([^\\s~]*)((?:~[0-9]+)?))?");
+    private final Pattern PRINT_MATCH = Pattern.compile("^[pP]/((?:\\\\/|[^/])*)(?!\\\\)/([^\\s~]*)((?:~[0-9]+)?)");
 
     private final Pattern ADDRESSED_MATCH = Pattern.compile("^[^,: /]+[,:]\\s+");
     private final String SOURCE_URL = "https://github.com/multiplexd/timemachine"; // self documentation
