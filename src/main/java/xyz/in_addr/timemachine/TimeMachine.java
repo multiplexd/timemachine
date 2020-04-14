@@ -10,11 +10,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 import com.google.common.collect.UnmodifiableIterator;
+
+import com.google.re2j.Matcher;
+import com.google.re2j.Pattern;
+import com.google.re2j.PatternSyntaxException;
 
 import org.pircbotx.Channel;
 import org.pircbotx.hooks.ListenerAdapter;
@@ -37,11 +38,14 @@ import org.pircbotx.output.OutputIRC;
  */
 public class TimeMachine extends ListenerAdapter {
     // substitution and recall commands -- regexen originally by puck
-    // (puckipedia.com), later manglified by multiplexd.
-    private final Pattern SED_MATCH = Pattern.compile("^[sS]/((?:\\\\/|[^/])*)(?!\\\\)/((?:\\\\/|[^/])*)(?:/([^\\s~]*)((?:~[0-9]+)?))?");
-    private final Pattern PRINT_MATCH = Pattern.compile("^[pP]/((?:\\\\/|[^/])*)(?!\\\\)/([^\\s~]*)((?:~[0-9]+)?)");
+    // (puckipedia.com), later manglified, broken, unbroken, and
+    // de-backtrackified by multiplexd. it turns out that using regex to
+    // match regex is *really* quite hard...
 
-    private final Pattern ADDRESSED_MATCH = Pattern.compile("^[^,: /]+[,:]\\s+");
+    private final Pattern SED_MATCH = Pattern.compile("^[sS]/((?:\\\\.|[^/\\\\])*)/((?:\\\\/|[^/])*)(?:/([^\\s~]*)((?:~[0-9]+)?))?");
+    private final Pattern PRINT_MATCH = Pattern.compile("^[pP]/((?:\\\\.|[^/\\\\])*)/([^\\s~]*)((?:~[0-9]+)?)");
+
+    private final Pattern ADDRESSED_MATCH = Pattern.compile("^[^,:\\s/]+[,:]\\s+");
     private final String SOURCE_URL = "https://github.com/multiplexd/timemachine"; // self documentation
 
     private final Pattern BOTSNACK_MATCH = Pattern.compile("^\\s*botsnack\\s*$");
@@ -319,7 +323,7 @@ public class TimeMachine extends ListenerAdapter {
         } else {
             try {
                 // remove leading tilde
-                offset = Integer.parseUnsignedInt(match.group(4).substring(1));
+                offset = Integer.parseUnsignedInt(offstring.substring(1));
             } catch (NumberFormatException nfe) {
                 return Optional.empty();
             }
