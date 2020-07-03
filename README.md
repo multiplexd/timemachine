@@ -1,8 +1,5 @@
 # timemachine
 
-> Mirrored at [https://github.com/multiplexd/timemachine] and
-> [https://tildegit.org/multiplexd/timemachine]
-
 `timemachine` is an IRC bot, which processes inline sed-like search-and-replace
 strings (`s///`) and an inline history recall command (`p//`).
 
