@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import javax.net.ssl.SSLSocketFactory;
 
 import xyz.in_addr.timemachine.GetOpt;
 
@@ -75,7 +76,7 @@ public class Configurator {
             env, modes;
         String[] split;
         int port, recall, opt, ret;
-        boolean ssl;
+        boolean ssl, sslnoverify;
         List<String> autojoin;
         List<Pattern> owners;
         Set<String> ignores;
@@ -83,14 +84,14 @@ public class Configurator {
         InetAddress saddr;
         Pattern pat;
 
-        host = null; port = 0; ssl = false; sourcehost = null; recall = 0;
-        nick = null; realname = null; ircname = null; modes = null;
+        host = null; port = 0; ssl = false; sslnoverify = false; sourcehost = null;
+        recall = 0; nick = null; realname = null; ircname = null; modes = null;
         nickserv = null; spass = null; saddr = null; pat = null;
         ignores = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         owners = new ArrayList<>();
         autojoin = new ArrayList<>();
 
-        options = new GetOpt(args, ":hH:p:sS:n:i:r:N:k:m:l:I:O:A:", false);
+        options = new GetOpt(args, ":hH:p:sQS:n:i:r:N:k:m:l:I:O:A:", false);
 
         while ((opt = options.getOpt()) != -1) {
             switch (opt) {
@@ -105,6 +106,9 @@ public class Configurator {
                 break;
             case 's':
                 ssl = true;
+                break;
+            case 'Q':
+                sslnoverify = true;
                 break;
             case 'S':
                 sourcehost = options.optarg();
@@ -168,6 +172,7 @@ public class Configurator {
         exitIf(ircname == null, "missing bot ircname");
         exitIf(realname == null, "missing bot realname");
         exitIf(recall == 0, "missing message history limit");
+        exitIf(!ssl && sslnoverify, "cannot specify -Q without -s");
 
         builder = configBuilderDefaults();
         builder.addServer(host, port)
@@ -175,9 +180,12 @@ public class Configurator {
             .setLogin(ircname)
             .setRealName(realname);
 
-        if (ssl)
-            // there are a *lot* of semi-broken networks around
-            builder.setSocketFactory(new UtilSSLSocketFactory().trustAllCertificates());
+        if (ssl) {
+            if (sslnoverify)
+                builder.setSocketFactory(new UtilSSLSocketFactory().trustAllCertificates());
+            else
+                builder.setSocketFactory(SSLSocketFactory.getDefault());
+        }
 
         if (sourcehost != null) {
             try {
@@ -220,7 +228,8 @@ public class Configurator {
             "        -h        Display this help\n" +
             "        -H host   IRC server host\n" +
             "        -p port   IRC server port\n" +
-            "        -s        Use TLS\n\n" +
+            "        -s        Use TLS\n" +
+            "        -Q        Do not verify server TLS certificates\n\n" +
             "        -S addr   Source address for outgoing connection\n" +
             "        -n nick   Bot nick\n" +
             "        -i name   Bot ircname\n" +
