@@ -8,10 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 import xyz.in_addr.timemachine.GetOpt;
+
+import com.google.re2j.Pattern;
+import com.google.re2j.PatternSyntaxException;
 
 import org.pircbotx.Configuration;
 import org.pircbotx.UtilSSLSocketFactory;
@@ -24,12 +25,12 @@ public class Configurator {
     public static class TMConfig {
         public Configuration.Builder config;
         public int recalllimit;
-        public List<String> ownerlist;
+        public List<Pattern> ownerlist;
         public Set<String> ignorelist;
         public String initialmodes;
 
         TMConfig(Configuration.Builder cb, int rl, Set<String> il,
-                 List<String> ol, String im) {
+                 List<Pattern> ol, String im) {
             this.config = cb;
             this.recalllimit = rl;
             this.ignorelist = il;
@@ -75,14 +76,16 @@ public class Configurator {
         String[] split;
         int port, recall, opt, ret;
         boolean ssl;
-        List<String> owners, autojoin;
+        List<String> autojoin;
+        List<Pattern> owners;
         Set<String> ignores;
         GetOpt options;
         InetAddress saddr;
+        Pattern pat;
 
         host = null; port = 0; ssl = false; sourcehost = null; recall = 0;
         nick = null; realname = null; ircname = null; modes = null;
-        nickserv = null; spass = null; saddr = null;
+        nickserv = null; spass = null; saddr = null; pat = null;
         ignores = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         owners = new ArrayList<>();
         autojoin = new ArrayList<>();
@@ -131,7 +134,13 @@ public class Configurator {
                 ignores.add(options.optarg());
                 break;
             case 'O':
-                owners.add(options.optarg());
+                try {
+                    pat = Pattern.compile(options.optarg());
+                } catch (PatternSyntaxException pse) {
+                    System.err.printf("bad owner hostmask regular expression: '%s'\n", options.optarg());
+                    System.exit(1);
+                }
+                owners.add(pat);
                 break;
             case 'A':
                 autojoin.add(options.optarg());
@@ -191,15 +200,6 @@ public class Configurator {
             env = System.getenv(spass);
             exitIf(env == null, "could not find environment variable " + spass);
             builder.setServerPassword(env);
-        }
-
-        for (String owner: owners) {
-            try {
-                Pattern.compile(owner);
-            } catch (PatternSyntaxException pse) {
-                System.err.printf("bad owner hostmask regular expression: '%s'\n", owner);
-                System.exit(1);
-            }
         }
 
         for (String channel: autojoin) {

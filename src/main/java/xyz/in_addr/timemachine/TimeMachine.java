@@ -57,12 +57,12 @@ public class TimeMachine extends ListenerAdapter {
     private final ReentrantLock ignorelock;
     private final ReentrantLock loglock;
     private Set<String> ignorelist;
-    private List<String> ownerlist;
+    private List<Pattern> ownerlist;
     private final int recall_limit;
     private final String initmodes;
     private MessageLog log;
 
-    public TimeMachine(int rl, Set<String> ig, List<String> ol, String m) {
+    public TimeMachine(int rl, Set<String> ig, List<Pattern> ol, String m) {
         this.recall_limit = rl;
         this.ignorelist = ig;
         this.ownerlist = ol;
@@ -136,16 +136,9 @@ public class TimeMachine extends ListenerAdapter {
     }
 
     private boolean isOwner(String hostmask) {
-        Pattern p;
-
-        for (String owner: ownerlist) {
-            try {
-                p = Pattern.compile(owner);
-                if (p.matcher(hostmask).matches())
-                    return true;
-            } catch (PatternSyntaxException pse) {
-                // handled in Configurator
-            }
+        for (Pattern owner: ownerlist) {
+            if (owner.matcher(hostmask).matches())
+                return true;
         }
 
         return false;
