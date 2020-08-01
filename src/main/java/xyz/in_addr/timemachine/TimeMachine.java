@@ -572,13 +572,15 @@ public class TimeMachine extends ListenerAdapter {
         private final String PRIVMSGFMT = "<%%s%s> %s";
         private final String ACTIONFMT = "* %%s%s %s";
         private LinkedList<UserMsg> history;
+        private int nextId;
 
         UserHist() {
             this.history = new LinkedList<>();
+            this.nextId = 0;
         }
 
         void pushMsg(String line, boolean ctcp) {
-            this.pushMsg(new UserMsg(line, ctcp));
+            this.pushMsg(new UserMsg(line, ctcp, this.nextId++));
         }
 
         void pushMsg(UserMsg msg) {
@@ -590,9 +592,10 @@ public class TimeMachine extends ListenerAdapter {
 
         String searchReplace(String search, String replace, int offset) {
             String replacement, ret;
-            UserMsg line;
+            UserMsg line, newline;
             Pattern pat;
             StringBuilder stars;
+            int id;
 
             line = null; pat = null;
 
@@ -615,16 +618,23 @@ public class TimeMachine extends ListenerAdapter {
 
             if (line == null) return null;
 
+            id = line.id();
             replacement = pat.matcher(line.line()).replaceFirst(replace);
             stars = new StringBuilder();
 
-            for (int i = 0; i < line.revision() + 1; i++)
+            for (int i = 0; i < line.nextRevision(); i++)
                 stars.append('*');
 
             ret = String.format(line.isctcp() ? this.ACTIONFMT : this.PRIVMSGFMT,
                                 stars.toString(), replacement);
 
-            this.pushMsg(line.revise(replacement));
+            newline = line.revise(replacement);
+
+            for (UserMsg u: this.history)
+                if (u.id() == id)
+                    u.bumpRevision();
+
+            this.pushMsg(newline);
 
             return ret;
         }
@@ -659,28 +669,32 @@ public class TimeMachine extends ListenerAdapter {
             recalled = line.line();
             stars = new StringBuilder();
 
-            for (int i = 1; i < line.revision() + 1; i++)
+            for (int i = 0; i < line.revision(); i++)
                 stars.append('*');
 
             return String.format(line.isctcp() ? this.ACTIONFMT : this.PRIVMSGFMT,
                                  stars.toString(), recalled);
         }
-
     }
+
 
     private class UserMsg {
         private final String line;
         private final boolean isctcp;
+        private final int id;
         private final int revision;
+        private int nextRevision;
 
-        UserMsg(String line, boolean ctcp) {
-            this(line, ctcp, 0);
+        UserMsg(String line, boolean ctcp, int id) {
+            this(line, ctcp, id, 0);
         }
 
-        UserMsg(String line, boolean ctcp, int revision) {
+        private UserMsg(String line, boolean ctcp, int id, int revision) {
             this.line = line;
             this.isctcp = ctcp;
+            this.id = id;
             this.revision = revision;
+            this.nextRevision = revision + 1;
         }
 
         boolean isctcp() {
@@ -691,12 +705,24 @@ public class TimeMachine extends ListenerAdapter {
             return this.line;
         }
 
+        int id() {
+            return this.id;
+        }
+
         int revision() {
             return this.revision;
         }
 
+        int nextRevision() {
+            return this.nextRevision;
+        }
+
+        void bumpRevision() {
+            this.nextRevision += 1;
+        }
+
         UserMsg revise(String replacement) {
-            return new UserMsg(replacement, this.isctcp, this.revision + 1);
+            return new UserMsg(replacement, this.isctcp, this.id, this.nextRevision);
         }
     }
 }
