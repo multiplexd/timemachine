@@ -31,6 +31,7 @@ import org.pircbotx.hooks.events.PrivateMessageEvent;
 import org.pircbotx.hooks.events.QuitEvent;
 import org.pircbotx.hooks.types.GenericChannelUserEvent;
 import org.pircbotx.hooks.types.GenericMessageEvent;
+import org.pircbotx.hooks.types.GenericUserEvent;
 import org.pircbotx.output.OutputIRC;
 
 /**
@@ -74,16 +75,14 @@ public class TimeMachine extends ListenerAdapter {
     }
 
     // administrative interface
-    @Override
-    public void onPrivateMessage(PrivateMessageEvent event) {
+    private void ownerInterface(GenericUserEvent event, String hostmask, String msg) {
         String[] split;
         OutputIRC out;
 
-        if (!isOwner(event.getUserHostmask().getHostmask()))
+        if (!isOwner(hostmask))
             return;
 
-        split = event.getMessage().split("\\s+", 3);
-
+        split = msg.split("\\s+", 3);
         out = event.getBot().sendIRC();
 
         if (split[0].equals("quit")) {
@@ -133,6 +132,11 @@ public class TimeMachine extends ListenerAdapter {
         }
 
         return;
+    }
+
+    @Override
+    public void onPrivateMessage(PrivateMessageEvent event) {
+        this.ownerInterface(event, event.getUserHostmask().getHostmask(), event.getMessage());
     }
 
     private boolean isOwner(String hostmask) {
@@ -211,10 +215,13 @@ public class TimeMachine extends ListenerAdapter {
                 user = split[0];
                 parsed = split[1];
 
-                // check for magic commands to return source URL
-                if (user.equals(event.getBot().getNick()) &&
-                    (parsed.equals("source") || parsed.equals("docs"))) {
-                    result = Optional.of(this.SOURCE_URL);
+                if (user.equalsIgnoreCase(event.getBot().getNick())) {
+                    // check for magic commands to return source URL
+                    if (parsed.equals("source") || parsed.equals("docs")) {
+                        result = Optional.of(this.SOURCE_URL);
+                    } else {
+                        this.ownerInterface(event, event.getUserHostmask().getHostmask(), parsed);
+                    }
                 }
             }
         }
