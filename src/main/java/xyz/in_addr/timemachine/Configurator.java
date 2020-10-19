@@ -8,12 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import javax.net.ssl.SSLSocketFactory;
 
 import xyz.in_addr.timemachine.GetOpt;
-
-import com.google.re2j.Pattern;
-import com.google.re2j.PatternSyntaxException;
 
 import org.pircbotx.Configuration;
 import org.pircbotx.UtilSSLSocketFactory;

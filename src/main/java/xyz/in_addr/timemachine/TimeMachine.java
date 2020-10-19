@@ -11,11 +11,11 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.google.common.collect.UnmodifiableIterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
-import com.google.re2j.Matcher;
-import com.google.re2j.Pattern;
-import com.google.re2j.PatternSyntaxException;
+import com.google.common.collect.UnmodifiableIterator;
 
 import org.pircbotx.Channel;
 import org.pircbotx.hooks.ListenerAdapter;
@@ -38,13 +38,18 @@ import org.pircbotx.output.OutputIRC;
  * Main bot event handler.
  */
 public class TimeMachine extends ListenerAdapter {
-    // substitution and recall commands -- regexen originally by puck
-    // (puckipedia.com), later manglified, broken, unbroken, and
-    // de-backtrackified by multiplexd. it turns out that using regex to
-    // match regex is *really* quite hard...
-
-    private final Pattern SED_MATCH = Pattern.compile("^[sS]/((?:\\\\.|[^/\\\\])*)/((?:\\\\/|[^/])*)(?:/([^\\s~]*)((?:~[0-9]+)?))?");
-    private final Pattern PRINT_MATCH = Pattern.compile("^[pP]/((?:\\\\.|[^/\\\\])*)/([^\\s~]*)((?:~[0-9]+)?)");
+    // substitution and recall commands. the regexen here were originally
+    // ones shared by Puck Meerburg, which i subsequently hacked on to adapt for
+    // my own use. i then spent an inordinate amount of effort debacktrackifying
+    // them for compatibility with google's re2j library. Puck still writes better
+    // regexes than i do (and is otherwise winning the sedbot arms race), so these
+    // are a more recent version of her regexes which support arbitrary input
+    // delimiters, lightly modified to preserve existing behaviour. the code which
+    // *really* needs re2j's linear-time matching now indirects through a wrapper
+    // class to prevent clashing imports, and we default to the standard library's
+    // backtracking implementation otherwise. matching regex with regex is hard.
+    private final Pattern SED_MATCH = Pattern.compile("^[sS](\\W)((?:\\\\\\1|(?:(?!\\1).)*))(?!\\\\)\\1((?:\\\\\\1|(?:(?!\\1).))*)(?:\\1([^ ~]*)((?:~[0-9]+)?))?");
+    private final Pattern PRINT_MATCH = Pattern.compile("^[pP](\\W)((?:\\\\\\1|(?:(?!\\1).)*))(?!\\\\)\\1([^ ~]*)((?:~[0-9]+)?)");
 
     private final Pattern ADDRESSED_MATCH = Pattern.compile("^[^,:\\s/]+[,:]\\s+");
     private final String SOURCE_URL = "https://github.com/multiplexd/timemachine"; // self documentation
@@ -255,8 +260,13 @@ public class TimeMachine extends ListenerAdapter {
         match = this.PRINT_MATCH.matcher(message);
         if (!match.find()) return null;
 
-        search = match.group(1);
-        target = match.group(2);
+        /* guard against invalid backslash separator */
+        if (match.group(1).equals("\\")) {
+            return Optional.empty();
+        }
+
+        search = match.group(2);
+        target = match.group(3);
 
         if (target.equals("")) {
             target = user;
@@ -269,7 +279,7 @@ public class TimeMachine extends ListenerAdapter {
         uhist = channel.getUser(target);
         if (uhist == null) return Optional.empty();
 
-        if (match.group(3).equals("")) {
+        if (match.group(4).equals("")) {
             offset = 0;
         } else {
             try {
@@ -297,10 +307,14 @@ public class TimeMachine extends ListenerAdapter {
         match = this.SED_MATCH.matcher(message);
         if (!match.find()) return null;
 
-        search = match.group(1);
-        replace = match.group(2);
-        target = match.group(3);
-        offstring = match.group(4);
+        if (match.group(1).equals("\\")) {
+            return Optional.empty();
+        }
+
+        search = match.group(2);
+        replace = match.group(3);
+        target = match.group(4);
+        offstring = match.group(5);
 
         if (target == null && offstring == null && replace.equals("")) {
             // catch s/foo/ form
@@ -600,20 +614,19 @@ public class TimeMachine extends ListenerAdapter {
         String searchReplace(String search, String replace, int offset) {
             String replacement, ret;
             UserMsg line, newline;
-            Pattern pat;
+            PatternMatcher pm;
             StringBuilder stars;
             int id;
 
-            line = null; pat = null;
+            line = null;
 
-            try {
-                pat = Pattern.compile(search);
-            } catch (PatternSyntaxException pse) {
+            pm = PatternMatcher.build(search);
+            if (pm == null) {
                 return null;
             }
 
             for (int i = 0; i < this.history.size(); i++) {
-                if (pat.matcher(this.history.get(i).line()).find()) {
+                if (pm.matches(this.history.get(i).line())) {
                     if (offset > 0) {
                         offset -= 1;
                     } else {
@@ -626,7 +639,7 @@ public class TimeMachine extends ListenerAdapter {
             if (line == null) return null;
 
             id = line.id();
-            replacement = pat.matcher(line.line()).replaceFirst(replace);
+            replacement = pm.replaceFirst(line.line(), replace);
             stars = new StringBuilder();
 
             for (int i = 0; i < line.nextRevision(); i++)
@@ -649,19 +662,18 @@ public class TimeMachine extends ListenerAdapter {
         String recall(String search, int offset) {
             String recalled;
             UserMsg line;
-            Pattern pat;
+            PatternMatcher pm;
             StringBuilder stars;
 
-            line = null; pat = null;
+            line = null;
 
-            try {
-                pat = Pattern.compile(search);
-            } catch (PatternSyntaxException pse) {
+            pm = PatternMatcher.build(search);
+            if (pm == null) {
                 return null;
             }
 
             for (int i = 0; i < this.history.size(); i++) {
-                if (pat.matcher(this.history.get(i).line()).find()) {
+                if (pm.matches(this.history.get(i).line())) {
                     if (offset > 0) {
                         offset -= 1;
                     } else {
