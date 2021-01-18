@@ -301,8 +301,12 @@ public class TimeMachine extends ListenerAdapter {
         Matcher match;
         String search, replace, target, offstring;
         int offset;
+        boolean global;
         UserHist uhist;
         String ret;
+
+        /* replace the first occurence or replace all of them? */
+        global = false;
 
         match = this.SED_MATCH.matcher(message);
         if (!match.find()) return null;
@@ -323,6 +327,9 @@ public class TimeMachine extends ListenerAdapter {
 
         if (target == null || target.equals("")) {
             target = user;
+        } else if (target.equals("g")) {
+            target = user;
+            global = true;
         } else {
             target = channel.expandUniquePrefix(target);
         }
@@ -343,7 +350,7 @@ public class TimeMachine extends ListenerAdapter {
             }
         }
 
-        ret = uhist.searchReplace(search, replace, offset);
+        ret = uhist.searchReplace(search, replace, offset, global);
         if (ret == null) return Optional.empty();
 
         return Optional.of(String.format(ret, target));
@@ -611,7 +618,7 @@ public class TimeMachine extends ListenerAdapter {
                 this.history.removeLast();
         }
 
-        String searchReplace(String search, String replace, int offset) {
+        String searchReplace(String search, String replace, int offset, boolean replaceAll) {
             String replacement, ret;
             UserMsg line, newline;
             PatternMatcher pm;
@@ -639,7 +646,11 @@ public class TimeMachine extends ListenerAdapter {
             if (line == null) return null;
 
             id = line.id();
-            replacement = pm.replaceFirst(line.line(), replace);
+            if (replaceAll) {
+                replacement = pm.replaceAll(line.line(), replace);
+            } else {
+                replacement = pm.replaceFirst(line.line(), replace);
+            }
             stars = new StringBuilder();
 
             for (int i = 0; i < line.nextRevision(); i++)

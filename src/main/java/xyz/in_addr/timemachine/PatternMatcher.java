@@ -36,4 +36,8 @@ public class PatternMatcher {
     public String replaceFirst(String query, String replacement) {
         return this.regex.matcher(query).replaceFirst(replacement);
     }
+
+    public String replaceAll(String query, String replacement) {
+        return this.regex.matcher(query).replaceAll(replacement);
+    }
 }
