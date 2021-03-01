@@ -73,11 +73,11 @@ public class TimeMachine extends ListenerAdapter {
     private final String initmodes;
     private MessageLog mlog;
 
-    public TimeMachine(int rl, Set<String> ig, List<Pattern> ol, String m) {
-        this.recall_limit = rl;
-        this.ignorelist = ig;
-        this.ownerlist = ol;
-        this.initmodes = m;
+    public TimeMachine(int limit, Set<String> ignores, List<Pattern> owners, String modes) {
+        this.recall_limit = limit;
+        this.ignorelist = ignores;
+        this.ownerlist = owners;
+        this.initmodes = modes;
         this.mlog = new MessageLog();
 
         this.ignorelock = new ReentrantLock(true);

@@ -29,13 +29,13 @@ public class Configurator {
         public Set<String> ignorelist;
         public String initialmodes;
 
-        TMConfig(Configuration.Builder cb, int rl, Set<String> il,
-                 List<Pattern> ol, String im) {
-            this.config = cb;
-            this.recalllimit = rl;
-            this.ignorelist = il;
-            this.ownerlist = ol;
-            this.initialmodes = im;
+        TMConfig(Configuration.Builder builder, int limit, Set<String> ignores,
+                 List<Pattern> owners, String modes) {
+            this.config = builder;
+            this.recalllimit = limit;
+            this.ignorelist = ignores;
+            this.ownerlist = owners;
+            this.initialmodes = modes;
         }
     }
 
