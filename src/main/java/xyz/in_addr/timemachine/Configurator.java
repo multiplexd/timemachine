@@ -5,6 +5,7 @@ package xyz.in_addr.timemachine;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -86,7 +87,8 @@ public class Configurator {
         host = null; port = 0; ssl = false; sslnoverify = false; sourcehost = null;
         recall = 0; nick = null; realname = null; ircname = null; modes = null;
         nickserv = null; spass = null; saddr = null; pat = null;
-        ignores = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        /* needed for thread safety */
+        ignores = Collections.synchronizedSet(new TreeSet<>(String.CASE_INSENSITIVE_ORDER));
         owners = new ArrayList<>();
         autojoin = new ArrayList<>();
 
