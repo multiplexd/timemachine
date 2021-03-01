@@ -34,10 +34,15 @@ import org.pircbotx.hooks.types.GenericMessageEvent;
 import org.pircbotx.hooks.types.GenericUserEvent;
 import org.pircbotx.output.OutputIRC;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Main bot event handler.
  */
 public class TimeMachine extends ListenerAdapter {
+    private static final Logger log = LoggerFactory.getLogger(TimeMachine.class);
+
     // substitution and recall commands. the regexen here were originally
     // ones shared by Puck Meerburg, which i subsequently hacked on to adapt for
     // my own use. i then spent an inordinate amount of effort debacktrackifying
@@ -66,14 +71,14 @@ public class TimeMachine extends ListenerAdapter {
     private List<Pattern> ownerlist;
     private final int recall_limit;
     private final String initmodes;
-    private MessageLog log;
+    private MessageLog mlog;
 
     public TimeMachine(int rl, Set<String> ig, List<Pattern> ol, String m) {
         this.recall_limit = rl;
         this.ignorelist = ig;
         this.ownerlist = ol;
         this.initmodes = m;
-        this.log = new MessageLog();
+        this.mlog = new MessageLog();
 
         this.ignorelock = new ReentrantLock(true);
         this.loglock = new ReentrantLock(true);
@@ -184,7 +189,7 @@ public class TimeMachine extends ListenerAdapter {
         Optional<String> result;
         boolean ignored;
 
-        this.log.populateChannel(event.getChannel());
+        this.mlog.populateChannel(event.getChannel());
 
         channel = event.getChannel().getName();
         user = event.getUser().getNick();
@@ -196,7 +201,7 @@ public class TimeMachine extends ListenerAdapter {
         if (ignored)
             return;
 
-        chist = this.log.getChannel(channel);
+        chist = this.mlog.getChannel(channel);
         if (chist == null) return;
 
         uhist = chist.getUser(user);
@@ -377,15 +382,15 @@ public class TimeMachine extends ListenerAdapter {
             // if the join event is for this bot, then set up state for the
             // joined channel and return -- we need further events to occur
             // for the list of users on this channel to become available.
-            this.log.addChannel(event.getChannel().getName());
+            this.mlog.addChannel(event.getChannel().getName());
 
             this.loglock.unlock();
             return;
         }
 
-        this.log.populateChannel(event.getChannel());
+        this.mlog.populateChannel(event.getChannel());
 
-        hist = this.log.getChannel(event.getChannel().getName());
+        hist = this.mlog.getChannel(event.getChannel().getName());
         if (hist != null)
             hist.addUser(event.getUser().getNick());
 
@@ -401,16 +406,16 @@ public class TimeMachine extends ListenerAdapter {
 
         if (event.getUser().getNick().equalsIgnoreCase(event.getBot().getNick())) {
             // we parted the channel
-            this.log.delChannel(event.getChannel().getName());
+            this.mlog.delChannel(event.getChannel().getName());
 
             this.loglock.unlock();
             return;
         }
 
-        this.log.populateChannel(event.getChannel());
+        this.mlog.populateChannel(event.getChannel());
 
         // remove user from state
-        hist = this.log.getChannel(event.getChannel().getName());
+        hist = this.mlog.getChannel(event.getChannel().getName());
         if (hist != null)
             hist.delUser(event.getUser().getNick());
 
@@ -426,16 +431,16 @@ public class TimeMachine extends ListenerAdapter {
 
         if (event.getRecipient().getNick().equalsIgnoreCase(event.getBot().getNick())) {
             // we were kicked from the channel
-            this.log.delChannel(event.getChannel().getName());
+            this.mlog.delChannel(event.getChannel().getName());
 
             this.loglock.unlock();
             return;
         }
 
-        this.log.populateChannel(event.getChannel());
+        this.mlog.populateChannel(event.getChannel());
 
         // remove user from state
-        hist = this.log.getChannel(event.getChannel().getName());
+        hist = this.mlog.getChannel(event.getChannel().getName());
         if (hist != null)
             hist.delUser(event.getRecipient().getNick());
 
@@ -451,7 +456,7 @@ public class TimeMachine extends ListenerAdapter {
 
         // delete user from channel message logs
         this.loglock.lock();
-        this.log.deleteNick(event.getUser().getNick());
+        this.mlog.deleteNick(event.getUser().getNick());
         this.loglock.unlock();
 
         return;
@@ -466,7 +471,7 @@ public class TimeMachine extends ListenerAdapter {
 
         // change key under which user message history is stored
         this.loglock.lock();
-        this.log.channelNick(event.getOldNick(), event.getNewNick());
+        this.mlog.channelNick(event.getOldNick(), event.getNewNick());
         this.loglock.unlock();
 
         return;
