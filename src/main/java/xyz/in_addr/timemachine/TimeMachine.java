@@ -72,6 +72,8 @@ public class TimeMachine extends ListenerAdapter {
 
         this.ignorelock = new ReentrantLock(true);
         this.loglock = new ReentrantLock(true);
+
+        log.info("Time machine is initialised. Vworp vworp!");
     }
 
     @Override
@@ -118,6 +120,7 @@ public class TimeMachine extends ListenerAdapter {
         if (!isctcp && this.BOTSNACK_MATCH.matcher(message).matches()) {
             // standard #xkcd botsnack protocol response
             result = Optional.of(this.BOTSNACK_RESPONSE);
+            log.info("Sending botsnack response");
         } else if (!isctcp && this.ADDRESSED_MATCH.matcher(message).find()) {
             // handle messages of the format "bob: s/foo/bar" by splitting into
             // nick and line, and then setting the default target of any possible
@@ -132,6 +135,7 @@ public class TimeMachine extends ListenerAdapter {
                         (parsed.equals("source") || parsed.equals("docs"))) {
                     // check for magic commands to return source URL
                     result = Optional.of(this.SOURCE_URL);
+                    log.info("Sending source and docs URLs");
                 }
             }
         }
@@ -170,6 +174,8 @@ public class TimeMachine extends ListenerAdapter {
             return Optional.empty();
         }
 
+        log.info("Recall command triggered");
+
         search = match.group(2);
         target = match.group(3);
 
@@ -198,6 +204,8 @@ public class TimeMachine extends ListenerAdapter {
         ret = uhist.recall(search, offset);
         if (ret == null) return Optional.empty();
 
+        log.info("Recall command matched, returning result");
+
         return Optional.of(String.format(ret, target));
     }
 
@@ -219,6 +227,8 @@ public class TimeMachine extends ListenerAdapter {
         if (match.group(1).equals("\\")) {
             return Optional.empty();
         }
+
+        log.info("Search and replace command triggered");
 
         search = match.group(2);
         replace = match.group(3);
@@ -258,6 +268,8 @@ public class TimeMachine extends ListenerAdapter {
         ret = uhist.searchReplace(search, replace, offset, global);
         if (ret == null) return Optional.empty();
 
+        log.info("Search and replace command matched, returning result");
+
         return Optional.of(String.format(ret, target));
     }
 
@@ -275,6 +287,8 @@ public class TimeMachine extends ListenerAdapter {
             this.mlog.addChannel(event.getChannel().getName());
 
             this.loglock.unlock();
+
+            log.info("Joined {}", event.getChannel().getName());
             return;
         }
 
@@ -299,6 +313,8 @@ public class TimeMachine extends ListenerAdapter {
             this.mlog.delChannel(event.getChannel().getName());
 
             this.loglock.unlock();
+
+            log.info("Parted {}", event.getChannel().getName());
             return;
         }
 
@@ -324,6 +340,8 @@ public class TimeMachine extends ListenerAdapter {
             this.mlog.delChannel(event.getChannel().getName());
 
             this.loglock.unlock();
+
+            log.info("Kicked from {}", event.getChannel().getName());
             return;
         }
 
