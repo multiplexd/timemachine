@@ -21,14 +21,16 @@ public class Main {
         Configuration.Builder builder;
         Configuration botconfig;
         TimeMachine machine;
+        AdminListener admin;
         PircBotX bot;
 
         config = Configurator.loadConfig(args);
 
         builder = config.config;
-        machine = new TimeMachine(config.recalllimit, config.ignorelist,
-                                  config.ownerlist, config.initialmodes);
-        botconfig = builder.addListener(machine).buildConfiguration();
+        machine = new TimeMachine(config.recalllimit, config.ignorelist);
+        admin = new AdminListener(config.ignorelist, config.ownerlist, config.initialmodes);
+
+        botconfig = builder.addListener(admin).addListener(machine).buildConfiguration();
         bot = new PircBotX(botconfig);
 
         try {

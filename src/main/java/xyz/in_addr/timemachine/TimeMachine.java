@@ -20,8 +20,6 @@ import com.google.common.collect.UnmodifiableIterator;
 import org.pircbotx.Channel;
 import org.pircbotx.hooks.ListenerAdapter;
 import org.pircbotx.hooks.events.ActionEvent;
-import org.pircbotx.hooks.events.ConnectEvent;
-import org.pircbotx.hooks.events.InviteEvent;
 import org.pircbotx.hooks.events.JoinEvent;
 import org.pircbotx.hooks.events.KickEvent;
 import org.pircbotx.hooks.events.MessageEvent;
@@ -32,7 +30,6 @@ import org.pircbotx.hooks.events.QuitEvent;
 import org.pircbotx.hooks.types.GenericChannelUserEvent;
 import org.pircbotx.hooks.types.GenericMessageEvent;
 import org.pircbotx.hooks.types.GenericUserEvent;
-import org.pircbotx.output.OutputIRC;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,108 +59,19 @@ public class TimeMachine extends ListenerAdapter {
     private final Pattern BOTSNACK_MATCH = Pattern.compile("^\\s*botsnack\\s*$");
     private final String BOTSNACK_RESPONSE = ":D";
 
-    // emulate the sound of the tardis when quitting
-    private final String PART_MESSAGE = "*hooreeerwww... hooreeerwww... veeoom-eeom...*";
-
     private final ReentrantLock ignorelock;
     private final ReentrantLock loglock;
-    private Set<String> ignorelist;
-    private List<Pattern> ownerlist;
+    private final Set<String> ignorelist;
     private final int recall_limit;
-    private final String initmodes;
-    private MessageLog mlog;
+    private final MessageLog mlog;
 
-    public TimeMachine(int limit, Set<String> ignores, List<Pattern> owners, String modes) {
+    public TimeMachine(int limit, Set<String> ignores) {
         this.recall_limit = limit;
-        this.ignorelist = ignores;
-        this.ownerlist = owners;
-        this.initmodes = modes;
+        this.ignorelist = ignores; /* this is assumed to be thread-safe */
         this.mlog = new MessageLog();
 
         this.ignorelock = new ReentrantLock(true);
         this.loglock = new ReentrantLock(true);
-    }
-
-    // administrative interface
-    private void ownerInterface(GenericUserEvent event, String hostmask, String msg) {
-        String[] split;
-        OutputIRC out;
-
-        if (!isOwner(hostmask))
-            return;
-
-        split = msg.split("\\s+", 3);
-        out = event.getBot().sendIRC();
-
-        if (split[0].equals("quit")) {
-            event.getBot().stopBotReconnect();
-            // emulate the sound of the tardis when quitting
-            out.quitServer(PART_MESSAGE);
-            return;
-        }
-
-        if (split.length == 1)
-            return;
-
-        switch (split[0]) {
-        case "join":
-            if (split.length > 2) {
-                out.joinChannel(split[1], split[2]);
-            } else {
-                out.joinChannel(split[1]);
-            }
-            break;
-        case "part":
-            if (event.getBot().getUserChannelDao().containsChannel(split[1])) {
-                event.getBot()
-                    .getUserChannelDao()
-                    .getChannel(split[1])
-                    .send()
-                    .part(PART_MESSAGE);
-            }
-            break;
-        case "ignore":
-            this.ignorelock.lock();
-            this.ignorelist.add(split[1]);
-            this.ignorelock.unlock();
-            break;
-        case "unignore":
-            this.ignorelock.lock();
-            this.ignorelist.remove(split[1]);
-            this.ignorelock.unlock();
-            break;
-        case "say":
-            if (split.length > 2 &&
-                    event.getBot().getUserChannelDao().containsChannel(split[1])) {
-                event.getBot().getUserChannelDao()
-                    .getChannel(split[1]).send().message(split[2]);
-            }
-            break;
-        }
-
-        return;
-    }
-
-    @Override
-    public void onPrivateMessage(PrivateMessageEvent event) {
-        this.ownerInterface(event, event.getUserHostmask().getHostmask(), event.getMessage());
-    }
-
-    private boolean isOwner(String hostmask) {
-        for (Pattern owner: ownerlist) {
-            if (owner.matcher(hostmask).matches())
-                return true;
-        }
-
-        return false;
-    }
-
-    @Override
-    public void onConnect(ConnectEvent event) {
-        // set user modes when connected
-        if (this.initmodes != null) {
-            event.getBot().sendIRC().mode(event.getBot().getNick(), this.initmodes);
-        }
     }
 
     @Override
@@ -187,18 +95,13 @@ public class TimeMachine extends ListenerAdapter {
         ChannelHist chist;
         UserHist uhist;
         Optional<String> result;
-        boolean ignored;
 
         this.mlog.populateChannel(event.getChannel());
 
         channel = event.getChannel().getName();
         user = event.getUser().getNick();
 
-        this.ignorelock.lock();
-        ignored = this.ignorelist.contains(user);
-        this.ignorelock.unlock();
-
-        if (ignored)
+        if (this.ignorelist.contains(user))
             return;
 
         chist = this.mlog.getChannel(channel);
@@ -219,19 +122,16 @@ public class TimeMachine extends ListenerAdapter {
             // handle messages of the format "bob: s/foo/bar" by splitting into
             // nick and line, and then setting the default target of any possible
             // recall or search/replace to the addressed user.
-            split = message.split("[:,]\\s+", 2);
+            split = message.split("[:;,]\\s+", 2);
 
             if (split.length > 1) {
                 user = split[0];
                 parsed = split[1];
 
-                if (user.equalsIgnoreCase(event.getBot().getNick())) {
+                if (user.equalsIgnoreCase(event.getBot().getNick()) &&
+                        (parsed.equals("source") || parsed.equals("docs"))) {
                     // check for magic commands to return source URL
-                    if (parsed.equals("source") || parsed.equals("docs")) {
-                        result = Optional.of(this.SOURCE_URL);
-                    } else {
-                        this.ownerInterface(event, event.getUserHostmask().getHostmask(), parsed);
-                    }
+                    result = Optional.of(this.SOURCE_URL);
                 }
             }
         }
@@ -361,16 +261,6 @@ public class TimeMachine extends ListenerAdapter {
         return Optional.of(String.format(ret, target));
     }
 
-    @Override
-    public void onInvite(InviteEvent event) {
-        OutputIRC out;
-
-        if (!isOwner(event.getUserHostmask().getHostmask()))
-            return;
-
-        out = event.getBot().sendIRC();
-        out.joinChannel(event.getChannel());
-    }
 
     @Override
     public void onJoin(JoinEvent event) {
