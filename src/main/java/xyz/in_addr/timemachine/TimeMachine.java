@@ -22,6 +22,7 @@ import org.pircbotx.hooks.ListenerAdapter;
 import org.pircbotx.hooks.events.ActionEvent;
 import org.pircbotx.hooks.events.JoinEvent;
 import org.pircbotx.hooks.events.KickEvent;
+import org.pircbotx.hooks.events.ListenerExceptionEvent;
 import org.pircbotx.hooks.events.MessageEvent;
 import org.pircbotx.hooks.events.NickChangeEvent;
 import org.pircbotx.hooks.events.PartEvent;
@@ -383,6 +384,11 @@ public class TimeMachine extends ListenerAdapter {
         this.loglock.unlock();
 
         return;
+    }
+
+    @Override
+    public void onListenerException(ListenerExceptionEvent event) {
+        log.error("Listener exception! {}", event.getMessage());
     }
 
     private class MessageLog {
