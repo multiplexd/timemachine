@@ -51,7 +51,7 @@ public class TimeMachine extends ListenerAdapter {
     // *really* needs re2j's linear-time matching now indirects through a wrapper
     // class to prevent clashing imports, and we default to the standard library's
     // backtracking implementation otherwise. matching regex with regex is hard.
-    private final Pattern SED_MATCH = Pattern.compile("^[sS](\\W)((?:\\\\\\1|(?:(?!\\1).))*)(?!\\\\)\\1((?:\\\\\\1|(?:(?!\\1).))*)(?:\\1([^ ~]*)((?:~[0-9]+)?))?");
+    private final Pattern SED_MATCH = Pattern.compile("^[sS](\\W)((?:\\\\\\1|(?:(?!\\1).))*)(?!\\\\)\\1((?:\\\\\\1|\\\\\\\\|(?:(?!\\1).))*)(?:\\1([^ ~]*)((?:~[0-9]+)?))?");
     private final Pattern PRINT_MATCH = Pattern.compile("^[pP](\\W)((?:\\\\\\1|(?:(?!\\1).))*)(?!\\\\)\\1([^ ~]*)((?:~[0-9]+)?)");
 
     private final Pattern ADDRESSED_MATCH = Pattern.compile("^[^,:\\s/]+[,:]\\s+");
