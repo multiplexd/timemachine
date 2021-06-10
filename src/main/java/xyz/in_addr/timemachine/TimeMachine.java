@@ -162,7 +162,7 @@ public class TimeMachine extends ListenerAdapter {
     // recall a user's previous line
     private Optional<String> recall(ChannelHist channel, String user, String message) {
         Matcher match;
-        String search, target;
+        String delim, search, target;
         int offset;
         UserHist uhist;
         String ret;
@@ -170,14 +170,16 @@ public class TimeMachine extends ListenerAdapter {
         match = this.PRINT_MATCH.matcher(message);
         if (!match.find()) return null;
 
-        /* guard against invalid backslash separator */
-        if (match.group(1).equals("\\")) {
+        delim = match.group(1);
+
+        /* guard against invalid backslash and space separators */
+        if (delim.equals("\\") || delim.equals(" ")) {
             return Optional.empty();
         }
 
         log.info("Recall command triggered");
 
-        search = match.group(2);
+        search = match.group(2).replace("\\" + delim, delim);
         target = match.group(3);
 
         if (target.equals("")) {
@@ -213,7 +215,7 @@ public class TimeMachine extends ListenerAdapter {
     // perform a regex search and replace on a user's line
     private Optional<String> searchReplace(ChannelHist channel, String user, String message) {
         Matcher match;
-        String search, replace, target, offstring;
+        String delim, search, replace, target, offstring;
         int offset;
         boolean global;
         UserHist uhist;
@@ -225,14 +227,16 @@ public class TimeMachine extends ListenerAdapter {
         match = this.SED_MATCH.matcher(message);
         if (!match.find()) return null;
 
-        if (match.group(1).equals("\\")) {
+        delim = match.group(1);
+
+        if (delim.equals("\\") || delim.equals(" ")) {
             return Optional.empty();
         }
 
         log.info("Search and replace command triggered");
 
-        search = match.group(2);
-        replace = match.group(3);
+        search = match.group(2).replace("\\" + delim, delim);
+        replace = match.group(3).replace("\\" + delim, delim);
         target = match.group(4);
         offstring = match.group(5);
 
