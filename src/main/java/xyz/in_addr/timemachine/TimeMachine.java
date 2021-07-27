@@ -569,10 +569,16 @@ public class TimeMachine extends ListenerAdapter {
             if (line == null) return null;
 
             id = line.id();
-            if (replaceAll) {
-                replacement = pm.replaceAll(line.line(), replace);
-            } else {
-                replacement = pm.replaceFirst(line.line(), replace);
+            try {
+                if (replaceAll) {
+                    replacement = pm.replaceAll(line.line(), replace);
+                } else {
+                    replacement = pm.replaceFirst(line.line(), replace);
+                }
+            } catch (IndexOutOfBoundsException | IllegalArgumentException ex) {
+                // invalid replacement, e.g. using $3 in a regex match which
+                // has less than three capturing groups.
+                return null;
             }
             stars = new StringBuilder();
 
