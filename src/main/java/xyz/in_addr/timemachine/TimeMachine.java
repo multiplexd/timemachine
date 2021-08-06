@@ -204,12 +204,12 @@ public class TimeMachine extends ListenerAdapter {
             }
         }
 
-        ret = uhist.recall(search, offset);
+        ret = uhist.recall(target, search, offset);
         if (ret == null) return Optional.empty();
 
         log.info("Recall command matched, returning result");
 
-        return Optional.of(String.format(ret, target));
+        return Optional.of(ret);
     }
 
     // perform a regex search and replace on a user's line
@@ -270,12 +270,12 @@ public class TimeMachine extends ListenerAdapter {
             }
         }
 
-        ret = uhist.searchReplace(search, replace, offset, global);
+        ret = uhist.searchReplace(target, search, replace, offset, global);
         if (ret == null) return Optional.empty();
 
         log.info("Search and replace command matched, returning result");
 
-        return Optional.of(String.format(ret, target));
+        return Optional.of(ret);
     }
 
 
@@ -520,8 +520,8 @@ public class TimeMachine extends ListenerAdapter {
     }
 
     private class UserHist {
-        private final String PRIVMSGFMT = "<%%s%s> %s";
-        private final String ACTIONFMT = "* %%s%s %s";
+        private final String PRIVMSGFMT = "<%s%s> %s";
+        private final String ACTIONFMT = "* %s%s %s";
         private LinkedList<UserMsg> history;
         private int nextId;
 
@@ -541,7 +541,7 @@ public class TimeMachine extends ListenerAdapter {
                 this.history.removeLast();
         }
 
-        String searchReplace(String search, String replace, int offset, boolean replaceAll) {
+        String searchReplace(String target, String search, String replace, int offset, boolean replaceAll) {
             String replacement, ret;
             UserMsg line, newline;
             PatternMatcher pm;
@@ -586,7 +586,7 @@ public class TimeMachine extends ListenerAdapter {
                 stars.append('*');
 
             ret = String.format(line.isctcp() ? this.ACTIONFMT : this.PRIVMSGFMT,
-                                stars.toString(), replacement);
+                                target, stars.toString(), replacement);
 
             newline = line.revise(replacement);
 
@@ -599,7 +599,7 @@ public class TimeMachine extends ListenerAdapter {
             return ret;
         }
 
-        String recall(String search, int offset) {
+        String recall(String target, String search, int offset) {
             String recalled;
             UserMsg line;
             PatternMatcher pm;
@@ -632,7 +632,7 @@ public class TimeMachine extends ListenerAdapter {
                 stars.append('*');
 
             return String.format(line.isctcp() ? this.ACTIONFMT : this.PRIVMSGFMT,
-                                 stars.toString(), recalled);
+                                 target, stars.toString(), recalled);
         }
     }
 
