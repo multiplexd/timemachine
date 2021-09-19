@@ -162,7 +162,7 @@ public class TimeMachine extends ListenerAdapter {
     // recall a user's previous line
     private Optional<String> recall(ChannelHist channel, String user, String message) {
         Matcher match;
-        String delim, search, target;
+        String delim, search, target, offstring;
         int offset;
         UserHist uhist;
         String ret;
@@ -181,6 +181,7 @@ public class TimeMachine extends ListenerAdapter {
 
         search = match.group(2).replace("\\" + delim, delim);
         target = match.group(3);
+        offstring = match.group(4);
 
         if (target.equals("")) {
             target = user;
@@ -193,12 +194,12 @@ public class TimeMachine extends ListenerAdapter {
         uhist = channel.getUser(target);
         if (uhist == null) return Optional.empty();
 
-        if (match.group(4).equals("")) {
+        if (offstring.equals("")) {
             offset = 0;
         } else {
             try {
                 // remove leading tilde
-                offset = Integer.parseUnsignedInt(match.group(3).substring(1));
+                offset = Integer.parseUnsignedInt(offstring.substring(1));
             } catch (NumberFormatException nfe) {
                 return Optional.empty();
             }
