@@ -463,6 +463,8 @@ public class TimeMachine extends ListenerAdapter {
                 stars.append('*');
             }
 
+            log.info("Search and replace command matched, returning result");
+
             ret = String.format(newline.isctcp() ? this.ACTIONFMT : this.PRIVMSGFMT,
                                 line.nick(), stars.toString(), replacedMessage);
 
@@ -518,6 +520,8 @@ public class TimeMachine extends ListenerAdapter {
             for (int i = 0; i < line.revision(); i++) {
                 stars.append('*');
             }
+
+            log.info("Recall command matched, returning result");
 
             ret = String.format(line.isctcp() ? this.ACTIONFMT : this.PRIVMSGFMT,
                                 line.nick(), stars.toString(), line.fullMessage());
