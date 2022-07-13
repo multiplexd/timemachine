@@ -28,15 +28,16 @@ public class Configurator {
         public int recalllimit;
         public List<Pattern> ownerlist;
         public Set<String> ignorelist;
-        public String initialmodes;
+        public String initialmodes, logchannel;
 
         TMConfig(Configuration.Builder builder, int limit, Set<String> ignores,
-                 List<Pattern> owners, String modes) {
+                 List<Pattern> owners, String modes, String logchannel) {
             this.config = builder;
             this.recalllimit = limit;
             this.ignorelist = ignores;
             this.ownerlist = owners;
             this.initialmodes = modes;
+            this.logchannel = logchannel;
         }
     }
 
@@ -73,7 +74,7 @@ public class Configurator {
     public static TMConfig loadConfig(String[] args) {
         Configuration.Builder builder;
         String host, nick, realname, sourcehost, ircname, nickserv, spass,
-            env, modes;
+            env, modes, logchannel;
         String[] split;
         int port, recall, opt, ret;
         boolean ssl, sslnoverify;
@@ -86,13 +87,13 @@ public class Configurator {
 
         host = null; port = 0; ssl = false; sslnoverify = false; sourcehost = null;
         recall = 0; nick = null; realname = null; ircname = null; modes = null;
-        nickserv = null; spass = null; saddr = null; pat = null;
+        nickserv = null; spass = null; saddr = null; pat = null; logchannel = null;
         /* needed for thread safety */
         ignores = Collections.synchronizedSet(new TreeSet<>(String.CASE_INSENSITIVE_ORDER));
         owners = new ArrayList<>();
         autojoin = new ArrayList<>();
 
-        options = new GetOpt(args, ":hH:p:sQS:n:i:r:N:k:m:l:I:O:A:", false);
+        options = new GetOpt(args, ":hH:p:sQS:n:i:r:N:k:m:l:L:I:O:A:", false);
 
         while ((opt = options.getOpt()) != -1) {
             switch (opt) {
@@ -134,6 +135,9 @@ public class Configurator {
                 break;
             case 'l':
                 recall = getInt(options.optarg());
+                break;
+            case 'L':
+                logchannel = options.optarg();
                 break;
             case 'I':
                 ignores.add(options.optarg());
@@ -221,7 +225,7 @@ public class Configurator {
             }
         }
 
-        return new TMConfig(builder, recall, ignores, owners, modes);
+        return new TMConfig(builder, recall, ignores, owners, modes, logchannel);
     }
 
     private static void printUsage() {
@@ -243,7 +247,8 @@ public class Configurator {
             "        -O regex  Add hostmask regex to owner list (may be specified more than once)\n" +
             "        -A chan   Add channel to autojoin list (may be specified more than once;\n" +
             "                  channel key may be provided by separating channel and key with colon,\n" +
-            "                  e.g. #foo:key\n";
+            "                  e.g. #foo:key)\n" +
+            "        -L chan   Set channel where log messages will be sent, if channel is joined.\n";
 
         System.out.print(usage);
         System.exit(0);

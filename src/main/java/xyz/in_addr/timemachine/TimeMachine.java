@@ -24,8 +24,6 @@ import org.pircbotx.hooks.types.GenericMessageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO(multi): add logging channel functionality; at the very least for logging exceptions.
-
 /**
  * Main bot event handler.
  */
@@ -54,13 +52,15 @@ public class TimeMachine extends ListenerAdapter {
 
     private final Set<String> ignoreList;
     private final Map<String, MessageLog> messageLog;
+    private final String logChannel;
     private final int recallLimit;
 
     // ignores is expected to be a Set implementation which is safe against
     // concurrent accesses.
-    public TimeMachine(int limit, Set<String> ignores) {
+    public TimeMachine(int limit, Set<String> ignores, String logchan) {
         this.recallLimit = limit;
         this.ignoreList = ignores;
+        this.logChannel = logchan;
         this.messageLog = Collections.synchronizedMap(new TreeMap<>(String.CASE_INSENSITIVE_ORDER));
 
         log.info("Time machine is initialised. Vworp vworp!");
@@ -150,6 +150,9 @@ public class TimeMachine extends ListenerAdapter {
     @Override
     public void onListenerException(ListenerExceptionEvent event) {
         log.error("Listener exception! {}", event.getMessage());
+        if (this.logChannel != null) {
+            event.getBot().sendIRC().message(this.logChannel, String.format("Listener exception: %s", event.getMessage()));
+        }
     }
 
     @Override

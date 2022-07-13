@@ -27,7 +27,7 @@ public class Main {
         config = Configurator.loadConfig(args);
 
         builder = config.config;
-        machine = new TimeMachine(config.recalllimit, config.ignorelist);
+        machine = new TimeMachine(config.recalllimit, config.ignorelist, config.logchannel);
         admin = new AdminListener(config.ignorelist, config.ownerlist, config.initialmodes);
 
         botconfig = builder.addListener(admin).addListener(machine).buildConfiguration();
