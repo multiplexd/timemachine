@@ -149,9 +149,15 @@ public class TimeMachine extends ListenerAdapter {
 
     @Override
     public void onListenerException(ListenerExceptionEvent event) {
-        log.error("Listener exception! {}", event.getMessage());
+        String msg;
+
+        msg = String.format("Listener exception! Event class: %s; exception: %s",
+            event.getSourceEvent().getClass().getName(),
+            event.getException().toString());
+
+        log.error("{}", msg);
         if (this.logChannel != null) {
-            event.getBot().sendIRC().message(this.logChannel, String.format("Listener exception: %s", event.getMessage()));
+            event.getBot().sendIRC().message(this.logChannel, msg);
         }
     }
 
