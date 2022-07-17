@@ -336,7 +336,7 @@ public class TimeMachine extends ListenerAdapter {
         exactTarget = false;
         if (target == null || target.equals("") || target.equals("g")) {
             exactTarget = true;
-            global = target.equals("g");
+            global = target == null ? false : target.equals("g");
             target = msg.getAddressee() != null ? msg.getAddressee() : msg.getUser();
         }
 
