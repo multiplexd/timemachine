@@ -472,7 +472,7 @@ public class TimeMachine extends ListenerAdapter {
             log.info("Search and replace command matched, returning result");
 
             ret = String.format(newline.isctcp() ? this.ACTIONFMT : this.PRIVMSGFMT,
-                                line.nick(), stars.toString(), replacedMessage);
+                                line.nick(), stars.toString(), newline.fullMessage());
 
             return () -> {
                 this.pushMsg(newline);
